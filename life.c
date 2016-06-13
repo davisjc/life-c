@@ -15,10 +15,12 @@
 #define WINDOW_WIDTH_DEFAULT 640
 #define WINDOW_HEIGHT_DEFAULT 480
 
-int init_sdl(SDL_Window **win, /* populates with window */
+int sdl_init(SDL_Window **win, /* populates with window */
              SDL_Renderer **ren /* populates with renderer */);
 
-void teardown_sdl(SDL_Window *win,
+void sdl_log_error(const char *offending_func);
+
+void sdl_teardown(SDL_Window *win,
                   SDL_Renderer *ren,
                   const char *offending_func /* optional name of SDL func */);
 
@@ -28,13 +30,13 @@ main(int argc, char *argv[])
     /* Initialize SDL. */
     SDL_Window *win = NULL;
     SDL_Renderer *ren = NULL;
-    if (init_sdl(&win, &ren))
+    if (sdl_init(&win, &ren))
         return 1;
 
     /* Load zoidberg! */
     SDL_Surface *zoidsurf = SDL_LoadBMP("res/zoidberg.bmp");
     if (zoidsurf == NULL) {
-        teardown_sdl(win, ren, "SDL_LoadBMP");
+        sdl_teardown(win, ren, "SDL_LoadBMP");
         return 1;
     }
 
@@ -42,7 +44,7 @@ main(int argc, char *argv[])
     SDL_FreeSurface(zoidsurf);
     zoidsurf = NULL;
     if (zoidtex == NULL) {
-        teardown_sdl(win, ren, "SDL_CreateTextureFromSurface");
+        sdl_teardown(win, ren, "SDL_CreateTextureFromSurface");
         return 1;
     }
 
@@ -55,12 +57,12 @@ main(int argc, char *argv[])
     }
 
     printf("Exiting...\n");
-    teardown_sdl(win, ren, NULL);
+    sdl_teardown(win, ren, NULL);
     return 0;
 }
 
 int
-init_sdl(SDL_Window **win, SDL_Renderer **ren)
+sdl_init(SDL_Window **win, SDL_Renderer **ren)
 {
     if (SDL_Init(SDL_INIT_VIDEO)) {
         fprintf(stderr, "SDL_Init error: %s\n", SDL_GetError());
@@ -94,12 +96,18 @@ init_sdl(SDL_Window **win, SDL_Renderer **ren)
 }
 
 void
-teardown_sdl(SDL_Window *win, SDL_Renderer *ren, const char *offending_func)
+sdl_log_error(const char *offending_func)
+{
+    fprintf(stderr, "%s error: %s\n", offending_func, SDL_GetError());
+}
+
+void
+sdl_teardown(SDL_Window *win, SDL_Renderer *ren, const char *offending_func)
 {
     SDL_DestroyRenderer(ren);
     SDL_DestroyWindow(win);
     if (offending_func)
-        fprintf(stderr, "%s error: %s\n", offending_func, SDL_GetError());
+        sdl_log_error(offending_func);
     SDL_Quit();
 }
 
