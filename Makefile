@@ -1,6 +1,6 @@
 
 CC = clang
-CFLAGS = -Wall -g -lm
+CFLAGS = -Wall -g -lm -lSDL2
 BIN = ./bin
 SOURCES = $(wildcard *.c)
 TARGETS = $(addprefix $(BIN)/, $(SOURCES:.c=))

@@ -3,4 +3,5 @@
 *.swo
 **/bin/
 tags
+res/
 
