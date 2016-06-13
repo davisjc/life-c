@@ -49,12 +49,6 @@ sdl_log_error(const char *offending_func);
 int
 get_neighbor_count(uint8_t (*board)[BOARD_WIDTH], int row, int col);
 
-static SDL_Texture *
-texture_load(SDL_Renderer *ren, const char *filename);
-
-int
-zoidberg(SDL_Window *win, SDL_Renderer *ren);
-
 int
 main(int argc, char *argv[])
 {
@@ -208,47 +202,5 @@ get_neighbor_count(uint8_t (*board)[BOARD_WIDTH], int row, int col)
     if (row < BOARD_HEIGHT - 1 && col < BOARD_WIDTH - 1)
         count += board[row + 1][col + 1];
     return count;
-}
-
-static SDL_Texture *
-texture_load(SDL_Renderer *ren, const char *filename)
-{
-    SDL_Texture *tex = NULL;
-    SDL_Surface *surf = SDL_LoadBMP(filename);
-    if (surf == NULL) {
-        sdl_log_error("SDL_LoadBMP");
-        return NULL;
-    }
-
-    tex = SDL_CreateTextureFromSurface(ren, surf);
-    SDL_FreeSurface(surf);
-    surf = NULL;
-
-    if (tex == NULL) {
-        sdl_log_error("SDL_CreateTextureFromSurface");
-        return NULL;
-    }
-
-    return tex;
-}
-
-int
-zoidberg(SDL_Window *win, SDL_Renderer *ren)
-{
-    /* Load zoidberg! */
-    SDL_Texture *zoidtex = texture_load(ren, "res/zoidberg.bmp");
-    if (zoidtex == NULL) {
-        sdl_teardown(win, ren, NULL);
-    }
-
-    for (int angle = 0; angle < 360 * 3; angle += 20) {
-        SDL_RenderClear(ren);
-        SDL_RenderCopyEx(ren, zoidtex, NULL, NULL, angle, NULL, 0);
-        SDL_RenderPresent(ren);
-
-        SDL_Delay(0);
-    }
-
-    return 0;
 }
 
