@@ -13,16 +13,17 @@
 
 
 #define WINDOW_TITLE "Conway's Game of Life (Q to quit)"
-#define BOARD_WIDTH 100
-#define BOARD_HEIGHT 50
-#define SQUARE_SIZE 10
+#define BOARD_WIDTH 300
+#define BOARD_HEIGHT 150
+#define SQUARE_SIZE 5
 #define BOARD_ALIVE_COLOR {230, 170, 20}
 #define BOARD_DEAD_COLOR {20, 20, 20}
-#define ALIVE 1
-#define DEAD 0
 #define WINDOW_WIDTH_DEFAULT (BOARD_WIDTH * SQUARE_SIZE + BOARD_WIDTH + 1)
 #define WINDOW_HEIGHT_DEFAULT (BOARD_HEIGHT * SQUARE_SIZE + BOARD_HEIGHT + 1)
-#define LUCK_LIFE_START 10 /* out of 100 */
+#define ALIVE 1
+#define DEAD 0
+#define LUCK_LIFE_START 15 /* out of 100 */
+#define FRAME_DELAY_MS 30
 
 /* Game board: 0 = dead; 1 = alive */
 static uint8_t board_a[BOARD_HEIGHT][BOARD_WIDTH];
@@ -123,7 +124,7 @@ main(int argc, char *argv[])
         board_next = board_temp;
 
         SDL_RenderPresent(ren);
-        SDL_Delay(60);
+        SDL_Delay(FRAME_DELAY_MS);
     }
 
     printf("Exiting...\n");
