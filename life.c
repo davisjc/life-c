@@ -13,8 +13,8 @@
 
 
 #define WINDOW_TITLE "Conway's Game of Life (Q to quit)"
-#define BOARD_WIDTH 130
-#define BOARD_HEIGHT 80
+#define BOARD_WIDTH 100
+#define BOARD_HEIGHT 50
 #define SQUARE_SIZE 10
 #define BOARD_ALIVE_COLOR {230, 170, 20}
 #define BOARD_DEAD_COLOR {20, 20, 20}
@@ -22,10 +22,11 @@
 #define DEAD 0
 #define WINDOW_WIDTH_DEFAULT (BOARD_WIDTH * SQUARE_SIZE + BOARD_WIDTH + 1)
 #define WINDOW_HEIGHT_DEFAULT (BOARD_HEIGHT * SQUARE_SIZE + BOARD_HEIGHT + 1)
-#define LUCK_LIFE_START 8 /* out of 100 */
+#define LUCK_LIFE_START 10 /* out of 100 */
 
 /* Game board: 0 = dead; 1 = alive */
-static uint8_t board[BOARD_HEIGHT][BOARD_WIDTH];
+static uint8_t board_a[BOARD_HEIGHT][BOARD_WIDTH];
+static uint8_t board_b[BOARD_HEIGHT][BOARD_WIDTH];
 
 /* SDL's perspective of board. */
 static SDL_Rect board_rects[BOARD_HEIGHT][BOARD_WIDTH];
@@ -46,7 +47,7 @@ static void
 sdl_log_error(const char *offending_func);
 
 int
-get_neighbor_count(int row, int col);
+get_neighbor_count(uint8_t (*board)[BOARD_WIDTH], int row, int col);
 
 static SDL_Texture *
 texture_load(SDL_Renderer *ren, const char *filename);
@@ -67,7 +68,7 @@ main(int argc, char *argv[])
     srand(time(NULL));
     for (int row = 0; row < BOARD_HEIGHT; row++)
         for (int col = 0; col < BOARD_WIDTH; col++)
-            board[row][col] = (rand() % 100 < LUCK_LIFE_START);
+            board_a[row][col] = (rand() % 100 < LUCK_LIFE_START);
     for (int row = 0; row < BOARD_HEIGHT; row++) {
         for (int col = 0; col < BOARD_WIDTH; col++) {
             board_rects[row][col].x = 1 + SQUARE_SIZE * col + col;
@@ -77,8 +78,9 @@ main(int argc, char *argv[])
         }
     }
 
-    int flip = 0;
     int quit = 0;
+    uint8_t (*board_cur)[BOARD_WIDTH] = board_a;
+    uint8_t (*board_next)[BOARD_WIDTH] = board_b;
     while (!quit) {
         SDL_Event e;
         while (SDL_PollEvent(&e)) {
@@ -94,7 +96,7 @@ main(int argc, char *argv[])
         for (int row = 0; row < BOARD_HEIGHT; row++) {
             for (int col = 0; col < BOARD_WIDTH; col++) {
                 uint8_t *color;
-                int alive = board[row][col];
+                int alive = board_cur[row][col];
                 if (alive)
                     color = color_alive;
                 else
@@ -105,24 +107,29 @@ main(int argc, char *argv[])
                 SDL_RenderFillRect(ren, &board_rects[row][col]);
 
                 /* Update the life/death status of this cell. */
-                int neighbor_count = get_neighbor_count(row, col);
+                int neighbor_count = get_neighbor_count(board_cur, row, col);
                 if (alive) {
                     if (neighbor_count < 2)
-                        board[row][col] = DEAD;
+                        board_next[row][col] = DEAD;
                     else if (neighbor_count > 3)
-                        board[row][col] = DEAD;
+                        board_next[row][col] = DEAD;
                     else
-                        board[row][col] = ALIVE;
+                        board_next[row][col] = ALIVE;
                 } else { /* dead */
                     if (neighbor_count == 3)
-                        board[row][col] = ALIVE;
+                        board_next[row][col] = ALIVE;
+                    else
+                        board_next[row][col] = DEAD;
                 }
             }
         }
 
+        uint8_t (*board_temp)[BOARD_WIDTH] = board_cur;
+        board_cur = board_next;
+        board_next = board_temp;
+
         SDL_RenderPresent(ren);
-        SDL_Delay(100);
-        flip = !flip;
+        SDL_Delay(60);
     }
 
     printf("Exiting...\n");
@@ -181,7 +188,7 @@ sdl_log_error(const char *offending_func)
 }
 
 int
-get_neighbor_count(int row, int col)
+get_neighbor_count(uint8_t (*board)[BOARD_WIDTH], int row, int col)
 {
     int count = 0;
     if (0 < row)
