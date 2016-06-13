@@ -15,14 +15,20 @@
 #define WINDOW_WIDTH_DEFAULT 640
 #define WINDOW_HEIGHT_DEFAULT 480
 
-int sdl_init(SDL_Window **win, /* populates with window */
-             SDL_Renderer **ren /* populates with renderer */);
+int
+sdl_init(SDL_Window **win, /* populates with window */
+         SDL_Renderer **ren /* populates with renderer */);
 
-void sdl_log_error(const char *offending_func);
+void
+sdl_teardown(SDL_Window *win,
+             SDL_Renderer *ren,
+             const char *offending_func /* optional name of SDL func */);
 
-void sdl_teardown(SDL_Window *win,
-                  SDL_Renderer *ren,
-                  const char *offending_func /* optional name of SDL func */);
+void
+sdl_log_error(const char *offending_func);
+
+SDL_Texture *
+texture_load(SDL_Renderer *ren, const char *filename);
 
 int
 main(int argc, char *argv[])
@@ -34,17 +40,9 @@ main(int argc, char *argv[])
         return 1;
 
     /* Load zoidberg! */
-    SDL_Surface *zoidsurf = SDL_LoadBMP("res/zoidberg.bmp");
-    if (zoidsurf == NULL) {
-        sdl_teardown(win, ren, "SDL_LoadBMP");
-        return 1;
-    }
-
-    SDL_Texture *zoidtex = SDL_CreateTextureFromSurface(ren, zoidsurf);
-    SDL_FreeSurface(zoidsurf);
-    zoidsurf = NULL;
+    SDL_Texture *zoidtex = texture_load(ren, "res/zoidberg.bmp");
     if (zoidtex == NULL) {
-        sdl_teardown(win, ren, "SDL_CreateTextureFromSurface");
+        sdl_teardown(win, ren, NULL);
         return 1;
     }
 
@@ -96,12 +94,6 @@ sdl_init(SDL_Window **win, SDL_Renderer **ren)
 }
 
 void
-sdl_log_error(const char *offending_func)
-{
-    fprintf(stderr, "%s error: %s\n", offending_func, SDL_GetError());
-}
-
-void
 sdl_teardown(SDL_Window *win, SDL_Renderer *ren, const char *offending_func)
 {
     SDL_DestroyRenderer(ren);
@@ -109,5 +101,33 @@ sdl_teardown(SDL_Window *win, SDL_Renderer *ren, const char *offending_func)
     if (offending_func)
         sdl_log_error(offending_func);
     SDL_Quit();
+}
+
+void
+sdl_log_error(const char *offending_func)
+{
+    fprintf(stderr, "%s error: %s\n", offending_func, SDL_GetError());
+}
+
+SDL_Texture *
+texture_load(SDL_Renderer *ren, const char *filename)
+{
+    SDL_Texture *tex = NULL;
+    SDL_Surface *surf = SDL_LoadBMP(filename);
+    if (surf == NULL) {
+        sdl_log_error("SDL_LoadBMP");
+        return NULL;
+    }
+
+    tex = SDL_CreateTextureFromSurface(ren, surf);
+    SDL_FreeSurface(surf);
+    surf = NULL;
+
+    if (tex == NULL) {
+        sdl_log_error("SDL_CreateTextureFromSurface");
+        return NULL;
+    }
+
+    return tex;
 }
 
