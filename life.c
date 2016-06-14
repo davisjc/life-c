@@ -73,15 +73,33 @@ main(int argc, char *argv[])
         }
     }
 
-    int quit = 0;
     uint8_t (*board_cur)[BOARD_WIDTH] = board_a;
     uint8_t (*board_next)[BOARD_WIDTH] = board_b;
+    int run = 1;
+    int quit = 0;
     while (!quit) {
+        int step = 0;
         SDL_Event e;
         while (SDL_PollEvent(&e)) {
-            if (e.type == SDL_KEYDOWN && e.key.keysym.sym == SDLK_q) {
-                quit = 1;
+            switch (e.type) {
+                case SDL_KEYDOWN:
+                    if (e.key.keysym.sym == SDLK_q) {
+                        quit = 1;
+                    } else if (e.key.keysym.sym == SDLK_SPACE) {
+                        run = !run;
+                    } else if (e.key.keysym.sym == SDLK_s) {
+                        run = 0;
+                        step = 1;
+                    }
+                    break;
+                default:
+                    break;
             }
+        }
+
+        if (!run && !step) {
+            SDL_Delay(FRAME_DELAY_MS);
+            continue;
         }
 
         /* Draw grid. */
