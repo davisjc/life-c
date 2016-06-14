@@ -7,6 +7,7 @@
  */
 
 #include "SDL2/SDL.h"
+#include <limits.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <time.h>
@@ -23,7 +24,8 @@
 #define ALIVE 1
 #define DEAD 0
 #define LUCK_LIFE_START 15 /* out of 100 */
-#define FRAME_DELAY_MS 30
+#define FRAME_DELAY_INITIAL_MS 30
+#define FRAME_DELAY_CHANGE_STEP_MS 10
 
 /* Game board: 0 = dead; 1 = alive */
 static uint8_t board_a[BOARD_HEIGHT][BOARD_WIDTH];
@@ -73,6 +75,8 @@ main(int argc, char *argv[])
         }
     }
 
+    int32_t frame_delay = FRAME_DELAY_INITIAL_MS;
+
     uint8_t (*board_cur)[BOARD_WIDTH] = board_a;
     uint8_t (*board_next)[BOARD_WIDTH] = board_b;
     int run = 1;
@@ -90,6 +94,14 @@ main(int argc, char *argv[])
                     } else if (e.key.keysym.sym == SDLK_s) {
                         run = 0;
                         step = 1;
+                    } else if (e.key.keysym.sym == SDLK_LEFTBRACKET) {
+                        frame_delay += FRAME_DELAY_CHANGE_STEP_MS;
+                        if (frame_delay > INT_MAX - FRAME_DELAY_CHANGE_STEP_MS)
+                            frame_delay = INT_MAX - FRAME_DELAY_CHANGE_STEP_MS;
+                    } else if (e.key.keysym.sym == SDLK_RIGHTBRACKET) {
+                        frame_delay -= FRAME_DELAY_CHANGE_STEP_MS;
+                        if (frame_delay < 0)
+                            frame_delay = 0;
                     }
                     break;
                 default:
@@ -98,7 +110,7 @@ main(int argc, char *argv[])
         }
 
         if (!run && !step) {
-            SDL_Delay(FRAME_DELAY_MS);
+            SDL_Delay(frame_delay);
             continue;
         }
 
@@ -142,7 +154,7 @@ main(int argc, char *argv[])
         board_next = board_temp;
 
         SDL_RenderPresent(ren);
-        SDL_Delay(FRAME_DELAY_MS);
+        SDL_Delay(frame_delay);
     }
 
     printf("Exiting...\n");
