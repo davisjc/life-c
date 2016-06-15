@@ -32,17 +32,19 @@
 #define FRAME_DELAY_CHANGE_STEP_MS 10
 
 typedef uint8_t Cell; /* 0 = dead; 1 = alive */
+typedef Cell (*Board)[BOARD_WIDTH];
+typedef SDL_Rect (*BoardRect)[BOARD_WIDTH];
 typedef uint8_t Color;
 
 /* Use two boards to maintain a backbuffer. */
-static Cell (*board_active)[BOARD_WIDTH];
-static Cell (*board_backbuffer)[BOARD_WIDTH];
+static Board board_active;
+static Board board_backbuffer;
 
 /* Track clicks */
-static Cell (*board_clicks)[BOARD_WIDTH];
+static Board board_clicks;
 
 /* SDL's perspective of board. */
-static SDL_Rect (*board_rects)[BOARD_WIDTH];
+static BoardRect board_rects;
 
 /* Define some colors. */
 static Color color_grid[3] = COLOR_GRID;
@@ -65,25 +67,25 @@ static void
 sdl_log_error(const char *offending_func_name);
 
 static void
-populate_board(Cell (*board)[BOARD_WIDTH]);
+populate_board(Board board);
 
 static void
-zero_board(Cell (*board)[BOARD_WIDTH]);
+zero_board(Board board);
 
 static void
-init_board_rects(SDL_Rect (*board_rects)[BOARD_WIDTH]);
+init_board_rects(BoardRect board_rects);
 
 static size_t
-get_neighbor_count(Cell (*board)[BOARD_WIDTH], int32_t row, int32_t col);
+get_neighbor_count(Board board, int32_t row, int32_t col);
 
 static Cell *
-get_cell_by_coord(Cell (*board)[BOARD_WIDTH], int32_t x, int32_t y);
+get_cell_by_coord(Board board, int32_t x, int32_t y);
 
 static void
 advance_cell(int32_t row,
              int32_t col,
-             Cell (*board_active)[BOARD_WIDTH],
-             Cell (*board_backbuffer)[BOARD_WIDTH]);
+             Board board_active,
+             Board board_backbuffer);
 
 static void
 get_color_for_cell(int32_t row, int32_t col, Color *color);
@@ -186,7 +188,7 @@ main(int argc, char *argv[])
             }
 
             /* Make the backbuffer active. */
-            Cell (*board_temp)[BOARD_WIDTH] = board_active;
+            Board board_temp = board_active;
             board_active = board_backbuffer;
             board_backbuffer = board_temp;
         }
@@ -289,7 +291,7 @@ sdl_log_error(const char *offending_func_name)
 }
 
 static void
-populate_board(Cell (*board)[BOARD_WIDTH])
+populate_board(Board board)
 {
     for (int32_t row = 0; row < BOARD_HEIGHT; row++)
         for (int32_t col = 0; col < BOARD_WIDTH; col++)
@@ -297,7 +299,7 @@ populate_board(Cell (*board)[BOARD_WIDTH])
 }
 
 static void
-zero_board(Cell (*board)[BOARD_WIDTH])
+zero_board(Board board)
 {
     for (int32_t row = 0; row < BOARD_HEIGHT; row++)
         for (int32_t col = 0; col < BOARD_WIDTH; col++)
@@ -305,7 +307,7 @@ zero_board(Cell (*board)[BOARD_WIDTH])
 }
 
 static void
-init_board_rects(SDL_Rect (*board_rects)[BOARD_WIDTH])
+init_board_rects(BoardRect board_rects)
 {
     for (int32_t row = 0; row < BOARD_HEIGHT; row++) {
         for (int32_t col = 0; col < BOARD_WIDTH; col++) {
@@ -318,7 +320,7 @@ init_board_rects(SDL_Rect (*board_rects)[BOARD_WIDTH])
 }
 
 static size_t
-get_neighbor_count(Cell (*board)[BOARD_WIDTH], int32_t row, int32_t col)
+get_neighbor_count(Board board, int32_t row, int32_t col)
 {
     uint32_t count = 0;
     if (0 < row)
@@ -341,7 +343,7 @@ get_neighbor_count(Cell (*board)[BOARD_WIDTH], int32_t row, int32_t col)
 }
 
 static Cell *
-get_cell_by_coord(Cell (*board)[BOARD_WIDTH], int32_t x, int32_t y)
+get_cell_by_coord(Board board, int32_t x, int32_t y)
 {
     uint32_t col = x / (GRID_SIZE + CELL_SIZE);
     uint32_t row = y / (GRID_SIZE + CELL_SIZE);
@@ -355,8 +357,8 @@ get_cell_by_coord(Cell (*board)[BOARD_WIDTH], int32_t x, int32_t y)
 static void
 advance_cell(int32_t row,
              int32_t col,
-             Cell (*board_active)[BOARD_WIDTH],
-             Cell (*board_backbuffer)[BOARD_WIDTH])
+             Board board_active,
+             Board board_backbuffer)
 {
     size_t neighbor_count = get_neighbor_count(board_active, row, col);
     if (is_alive(board_active[row][col])) {
