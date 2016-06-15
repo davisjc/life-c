@@ -37,23 +37,23 @@ static SDL_Rect board_rects[BOARD_HEIGHT][BOARD_WIDTH];
 static uint8_t color_alive[3] = BOARD_ALIVE_COLOR;
 static uint8_t color_dead[3] = BOARD_DEAD_COLOR;
 
-static int
-sdl_init(SDL_Window **win, /* populates with window */
-         SDL_Renderer **ren /* populates with renderer */);
+int
+static sdl_init(SDL_Window **win, /* populates with window */
+                SDL_Renderer **ren /* populates with renderer */);
 
-static void
-sdl_teardown(SDL_Window *win,
-             SDL_Renderer *ren,
-             const char *offending_func /* optional name of SDL func */);
+void
+static sdl_teardown(SDL_Window *win,
+                    SDL_Renderer *ren,
+                    const char *offending_func /* optional name of SDL func */);
 
-static void
-sdl_log_error(const char *offending_func);
+void
+static sdl_log_error(const char *offending_func);
 
-static void
-populate_board(uint8_t (*board)[BOARD_WIDTH]);
+void
+static populate_board(uint8_t (*board)[BOARD_WIDTH]);
 
 int
-get_neighbor_count(uint8_t (*board)[BOARD_WIDTH], int row, int col);
+static get_neighbor_count(uint8_t (*board)[BOARD_WIDTH], int row, int col);
 
 int
 main(int argc, char *argv[])
@@ -170,8 +170,8 @@ main(int argc, char *argv[])
     return 0;
 }
 
-static int
-sdl_init(SDL_Window **win, SDL_Renderer **ren)
+int
+static sdl_init(SDL_Window **win, SDL_Renderer **ren)
 {
     if (SDL_Init(SDL_INIT_VIDEO)) {
         fprintf(stderr, "SDL_Init error: %s\n", SDL_GetError());
@@ -204,8 +204,10 @@ sdl_init(SDL_Window **win, SDL_Renderer **ren)
     return 0;
 }
 
-static void
-sdl_teardown(SDL_Window *win, SDL_Renderer *ren, const char *offending_func)
+void
+static sdl_teardown(SDL_Window *win,
+                    SDL_Renderer *ren,
+                    const char *offending_func)
 {
     SDL_DestroyRenderer(ren);
     SDL_DestroyWindow(win);
@@ -214,14 +216,14 @@ sdl_teardown(SDL_Window *win, SDL_Renderer *ren, const char *offending_func)
     SDL_Quit();
 }
 
-static void
-sdl_log_error(const char *offending_func)
+void
+static sdl_log_error(const char *offending_func)
 {
     fprintf(stderr, "%s error: %s\n", offending_func, SDL_GetError());
 }
 
-static void
-populate_board(uint8_t (*board)[BOARD_WIDTH])
+void
+static populate_board(uint8_t (*board)[BOARD_WIDTH])
 {
     for (int row = 0; row < BOARD_HEIGHT; row++)
         for (int col = 0; col < BOARD_WIDTH; col++)
@@ -229,7 +231,7 @@ populate_board(uint8_t (*board)[BOARD_WIDTH])
 }
 
 int
-get_neighbor_count(uint8_t (*board)[BOARD_WIDTH], int row, int col)
+static get_neighbor_count(uint8_t (*board)[BOARD_WIDTH], int row, int col)
 {
     int count = 0;
     if (0 < row)
