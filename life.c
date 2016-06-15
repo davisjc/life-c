@@ -33,6 +33,8 @@
 /* A cell is just a byte: 0 = dead; 1 = alive */
 typedef uint8_t Cell;
 
+typedef uint8_t Color;
+
 /* Use two boards to maintain a backbuffer. */
 static Cell board_a[BOARD_HEIGHT][BOARD_WIDTH];
 static Cell board_b[BOARD_HEIGHT][BOARD_WIDTH];
@@ -40,9 +42,10 @@ static Cell board_b[BOARD_HEIGHT][BOARD_WIDTH];
 /* SDL's perspective of board. */
 static SDL_Rect board_rects[BOARD_HEIGHT][BOARD_WIDTH];
 
-static uint8_t color_grid[3] = GRID_COLOR;
-static uint8_t color_alive[3] = BOARD_ALIVE_COLOR;
-static uint8_t color_dead[3] = BOARD_DEAD_COLOR;
+/* Define some colors. */
+static Color color_grid[3] = GRID_COLOR;
+static Color color_alive[3] = BOARD_ALIVE_COLOR;
+static Color color_dead[3] = BOARD_DEAD_COLOR;
 
 static int
 sdl_init(SDL_Window **win, /* populates with window */
@@ -51,10 +54,10 @@ sdl_init(SDL_Window **win, /* populates with window */
 static void
 sdl_teardown(SDL_Window *win,
              SDL_Renderer *ren,
-             const char *offending_func /* optional name of SDL func */);
+             const char *offending_func_name /* optional name of SDL func */);
 
 static void
-sdl_log_error(const char *offending_func);
+sdl_log_error(const char *offending_func_name);
 
 static void
 populate_board(Cell (*board)[BOARD_WIDTH]);
@@ -62,7 +65,7 @@ populate_board(Cell (*board)[BOARD_WIDTH]);
 static void
 init_board_rects(SDL_Rect (*board_rects)[BOARD_WIDTH]);
 
-static uint32_t
+static size_t
 get_neighbor_count(Cell (*board)[BOARD_WIDTH], int32_t row, int32_t col);
 
 static Cell *
@@ -74,7 +77,7 @@ advance_cell(int32_t row,
              Cell (*board_cur)[BOARD_WIDTH],
              Cell (*board_next)[BOARD_WIDTH]);
 
-#define is_alive(cell) (cell)
+#define is_alive(cell) (!!cell)
 
 int
 main(int argc, char *argv[])
@@ -151,7 +154,7 @@ main(int argc, char *argv[])
 
         for (int32_t row = 0; row < BOARD_HEIGHT; row++) {
             for (int32_t col = 0; col < BOARD_WIDTH; col++) {
-                uint8_t *color;
+                Color *color;
                 if (is_alive(board_cur[row][col]))
                     color = color_alive;
                 else
@@ -167,12 +170,14 @@ main(int argc, char *argv[])
             }
         }
 
+        /* We're running, flip the backbuffer. */
         if (run || step) {
             Cell (*board_temp)[BOARD_WIDTH] = board_cur;
             board_cur = board_next;
             board_next = board_temp;
         }
 
+        /* Render. */
         SDL_RenderPresent(ren);
         SDL_Delay(frame_delay);
     }
@@ -219,19 +224,19 @@ sdl_init(SDL_Window **win, SDL_Renderer **ren)
 static void
 sdl_teardown(SDL_Window *win,
                     SDL_Renderer *ren,
-                    const char *offending_func)
+                    const char *offending_func_name)
 {
     SDL_DestroyRenderer(ren);
     SDL_DestroyWindow(win);
-    if (offending_func)
-        sdl_log_error(offending_func);
+    if (offending_func_name)
+        sdl_log_error(offending_func_name);
     SDL_Quit();
 }
 
 static void
-sdl_log_error(const char *offending_func)
+sdl_log_error(const char *offending_func_name)
 {
-    fprintf(stderr, "%s error: %s\n", offending_func, SDL_GetError());
+    fprintf(stderr, "%s error: %s\n", offending_func_name, SDL_GetError());
 }
 
 static void
@@ -255,7 +260,7 @@ init_board_rects(SDL_Rect (*board_rects)[BOARD_WIDTH])
     }
 }
 
-static uint32_t
+static size_t
 get_neighbor_count(Cell (*board)[BOARD_WIDTH], int32_t row, int32_t col)
 {
     uint32_t count = 0;
@@ -296,7 +301,7 @@ advance_cell(int32_t row,
              Cell (*board_cur)[BOARD_WIDTH],
              Cell (*board_next)[BOARD_WIDTH])
 {
-    int32_t neighbor_count = get_neighbor_count(board_cur, row, col);
+    size_t neighbor_count = get_neighbor_count(board_cur, row, col);
     if (is_alive(board_cur[row][col])) {
         if (neighbor_count < 2)
             board_next[row][col] = DEAD;
