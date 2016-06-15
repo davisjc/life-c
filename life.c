@@ -31,14 +31,12 @@
 #define FRAME_DELAY_INITIAL_MS 30
 #define FRAME_DELAY_CHANGE_STEP_MS 10
 
-/* A cell is just a byte: 0 = dead; 1 = alive */
-typedef uint8_t Cell;
-
+typedef uint8_t Cell; /* 0 = dead; 1 = alive */
 typedef uint8_t Color;
 
 /* Use two boards to maintain a backbuffer. */
-static Cell (*board_a)[BOARD_WIDTH];
-static Cell (*board_b)[BOARD_WIDTH];
+static Cell (*board_active)[BOARD_WIDTH];
+static Cell (*board_backbuffer)[BOARD_WIDTH];
 
 /* Track clicks */
 static Cell (*board_clicks)[BOARD_WIDTH];
@@ -104,15 +102,15 @@ main(int argc, char *argv[])
     srand(time(NULL));
 
     /* Initialize the board. */
-    board_a = malloc(BOARD_WIDTH * BOARD_HEIGHT * sizeof(**board_a));
-    board_b = malloc(BOARD_WIDTH * BOARD_HEIGHT * sizeof(**board_b));
+    board_active = malloc(BOARD_WIDTH * BOARD_HEIGHT *
+                          sizeof(**board_active));
+    board_backbuffer = malloc(BOARD_WIDTH * BOARD_HEIGHT *
+                              sizeof(**board_backbuffer));
     board_clicks = malloc(BOARD_WIDTH * BOARD_HEIGHT * sizeof(**board_clicks));
     board_rects = malloc(BOARD_WIDTH * BOARD_HEIGHT * sizeof(**board_rects));
-    populate_board(board_a);
+    populate_board(board_active);
     init_board_rects(board_rects);
 
-    Cell (*board_active)[BOARD_WIDTH] = board_a;
-    Cell (*board_backbuffer)[BOARD_WIDTH] = board_b;
     int run = 1;
     int quit = 0;
     while (!quit) {
