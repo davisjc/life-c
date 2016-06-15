@@ -14,9 +14,10 @@
 
 
 #define WINDOW_TITLE "Conway's Game of Life (Q to quit)"
-#define BOARD_WIDTH 250
-#define BOARD_HEIGHT 120
-#define SQUARE_SIZE 5
+#define BOARD_WIDTH 10
+#define BOARD_HEIGHT 10
+#define SQUARE_SIZE 20
+#define BORDER_SIZE 1
 #define BOARD_ALIVE_COLOR {230, 170, 20}
 #define BOARD_DEAD_COLOR {20, 20, 20}
 #define WINDOW_WIDTH_DEFAULT (BOARD_WIDTH * SQUARE_SIZE + BOARD_WIDTH + 1)
@@ -55,6 +56,9 @@ static populate_board(uint8_t (*board)[BOARD_WIDTH]);
 int
 static get_neighbor_count(uint8_t (*board)[BOARD_WIDTH], int row, int col);
 
+static uint8_t *
+get_cell_by_coord(uint8_t (*board)[BOARD_WIDTH], int32_t x, int32_t y);
+
 int
 main(int argc, char *argv[])
 {
@@ -64,16 +68,16 @@ main(int argc, char *argv[])
     if (sdl_init(&win, &ren))
         return 1;
 
-    /* Set the board. */
     srand(time(NULL));
 
+    /* Set the board. */
     populate_board(board_a);
 
     /* Specify SDL_Rect dimensions once for the board. */
     for (int row = 0; row < BOARD_HEIGHT; row++) {
         for (int col = 0; col < BOARD_WIDTH; col++) {
-            board_rects[row][col].x = 1 + SQUARE_SIZE * col + col;
-            board_rects[row][col].y = 1 + SQUARE_SIZE * row + row;
+            board_rects[row][col].x = BORDER_SIZE + SQUARE_SIZE * col + col;
+            board_rects[row][col].y = BORDER_SIZE + SQUARE_SIZE * row + row;
             board_rects[row][col].w = SQUARE_SIZE;
             board_rects[row][col].h = SQUARE_SIZE;
         }
@@ -88,6 +92,8 @@ main(int argc, char *argv[])
     while (!quit) {
         int step = 0;
         SDL_Event e;
+
+        /* Process events. */
         while (SDL_PollEvent(&e)) {
             switch (e.type) {
                 case SDL_KEYDOWN:
@@ -111,6 +117,14 @@ main(int argc, char *argv[])
                         if (!run)
                             run = 1;
                     }
+                    break;
+                case SDL_MOUSEBUTTONDOWN:
+                {
+                    int32_t x = e.button.x;
+                    int32_t y = e.button.y;
+                    printf("%d %d\n", x, y); /* TODO remove */
+                    get_cell_by_coord(board_next, x, y);
+                }
                     break;
                 default:
                     break;
@@ -251,5 +265,19 @@ static get_neighbor_count(uint8_t (*board)[BOARD_WIDTH], int row, int col)
     if (row < BOARD_HEIGHT - 1 && col < BOARD_WIDTH - 1)
         count += board[row + 1][col + 1];
     return count;
+}
+
+static uint8_t *
+get_cell_by_coord(uint8_t (*board)[BOARD_WIDTH], int32_t x, int32_t y)
+{
+    uint32_t col = x / (BORDER_SIZE + SQUARE_SIZE);
+    uint32_t row = y / (BORDER_SIZE + SQUARE_SIZE);
+    printf("%d %d\n", row, col); /* TODO remove */
+    if (row >= BOARD_HEIGHT)
+        row = BOARD_HEIGHT - 1;
+    if (col >= BOARD_WIDTH)
+        col = BOARD_WIDTH - 1;
+    printf("%d\n", board[row][col]); /* TODO remove */
+    return board[row] + col;
 }
 
