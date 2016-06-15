@@ -39,6 +39,9 @@ typedef uint8_t Color;
 static Cell board_a[BOARD_HEIGHT][BOARD_WIDTH];
 static Cell board_b[BOARD_HEIGHT][BOARD_WIDTH];
 
+/* Track clicks */
+static Cell board_clicks[BOARD_HEIGHT][BOARD_WIDTH];
+
 /* SDL's perspective of board. */
 static SDL_Rect board_rects[BOARD_HEIGHT][BOARD_WIDTH];
 
@@ -63,6 +66,9 @@ static void
 populate_board(Cell (*board)[BOARD_WIDTH]);
 
 static void
+zero_board(Cell (*board)[BOARD_WIDTH]);
+
+static void
 init_board_rects(SDL_Rect (*board_rects)[BOARD_WIDTH]);
 
 static size_t
@@ -74,8 +80,8 @@ get_cell_by_coord(Cell (*board)[BOARD_WIDTH], int32_t x, int32_t y);
 static void
 advance_cell(int32_t row,
              int32_t col,
-             Cell (*board_cur)[BOARD_WIDTH],
-             Cell (*board_next)[BOARD_WIDTH]);
+             Cell (*board_active)[BOARD_WIDTH],
+             Cell (*board_backbuffer)[BOARD_WIDTH]);
 
 #define is_alive(cell) (!!cell)
 
@@ -98,15 +104,22 @@ main(int argc, char *argv[])
 
     int32_t frame_delay = FRAME_DELAY_INITIAL_MS;
 
-    Cell (*board_cur)[BOARD_WIDTH] = board_a;
-    Cell (*board_next)[BOARD_WIDTH] = board_b;
+    Cell (*board_active)[BOARD_WIDTH] = board_a;
+    Cell (*board_backbuffer)[BOARD_WIDTH] = board_b;
     int run = 1;
     int quit = 0;
     while (!quit) {
         int step = 0;
-        SDL_Event e;
+        int restart = 0;
+        int clear = 0;
+        int clicked = 0;
+        int dirty = 0;
+        zero_board(board_clicks);
 
-        /* Process events. */
+        /*
+         * Events.
+         */
+        SDL_Event e;
         while (SDL_PollEvent(&e)) {
             switch (e.type) {
                 case SDL_KEYDOWN:
@@ -126,20 +139,24 @@ main(int argc, char *argv[])
                         if (frame_delay < 0)
                             frame_delay = 0;
                     } else if (e.key.keysym.sym == SDLK_r) {
-                        populate_board(board_cur);
+                        restart = 1;
+                        run = 1;
                         frame_delay = FRAME_DELAY_INITIAL_MS;
-                        if (!run)
-                            run = 1;
+                    } else if (e.key.keysym.sym == SDLK_c) {
+                        clear = 1;
+                        run = 0;
+                        step = 1;
                     }
                     break;
                 case SDL_MOUSEBUTTONDOWN:
                 {
                     int32_t x = e.button.x;
                     int32_t y = e.button.y;
-                    Cell *cell = get_cell_by_coord(board_cur, x, y);
+                    Cell *cell = get_cell_by_coord(board_clicks, x, y);
 
-                    /* Flip this cell's alive/dead state. */
+                    /* Flip this cell's clicked/unclicked state. */
                     *cell = !*cell;
+                    clicked = 1;
                 }
                     break;
                 default:
@@ -147,38 +164,73 @@ main(int argc, char *argv[])
             }
         }
 
-        /* Draw grid. */
-        SDL_SetRenderDrawColor(ren, color_grid[0], color_grid[1], color_grid[2],
-                               255);
-        SDL_RenderClear(ren);
+        /*
+         * Logic.
+         */
+        if (restart)
+            populate_board(board_active);
+        else if (clear)
+            zero_board(board_active);
 
-        for (int32_t row = 0; row < BOARD_HEIGHT; row++) {
-            for (int32_t col = 0; col < BOARD_WIDTH; col++) {
-                Color *color;
-                if (is_alive(board_cur[row][col]))
-                    color = color_alive;
-                else
-                    color = color_dead;
+        if (run || step) {
+            /* Write the updated life/death statuses to the backbuffer. */
+            for (int32_t row = 0; row < BOARD_HEIGHT; row++) {
+                for (int32_t col = 0; col < BOARD_WIDTH; col++) {
+                    advance_cell(row, col, board_active, board_backbuffer);
+                }
+            }
 
-                /* Draw this cell. */
-                SDL_SetRenderDrawColor(ren, color[0], color[1], color[2], 255);
-                SDL_RenderFillRect(ren, &board_rects[row][col]);
+            /* Make the backbuffer active. */
+            Cell (*board_temp)[BOARD_WIDTH] = board_active;
+            board_active = board_backbuffer;
+            board_backbuffer = board_temp;
+        }
 
-                /* Update the life/death status of this cell. */
-                if (run || step)
-                    advance_cell(row, col, board_cur, board_next);
+        if (clicked) {
+            for (int32_t row = 0; row < BOARD_HEIGHT; row++) {
+                for (int32_t col = 0; col < BOARD_WIDTH; col++) {
+                    if (board_clicks[row][col]) {
+                        /* Kill if alive; revive if dead. */
+                        board_active[row][col] = !board_active[row][col];
+                        dirty = 1;
+                    }
+                }
             }
         }
 
-        /* We're running, flip the backbuffer. */
-        if (run || step) {
-            Cell (*board_temp)[BOARD_WIDTH] = board_cur;
-            board_cur = board_next;
-            board_next = board_temp;
+        if (restart || run || step)
+            dirty = 1;
+
+        /*
+         * Render.
+         */
+        if (dirty) {
+            /* Grid. */
+            SDL_SetRenderDrawColor(ren,
+                                   color_grid[0], color_grid[1], color_grid[2],
+                                   255);
+            SDL_RenderClear(ren);
+
+            /* Cells. */
+            for (int32_t row = 0; row < BOARD_HEIGHT; row++) {
+                for (int32_t col = 0; col < BOARD_WIDTH; col++) {
+                    Color *color;
+                    if (is_alive(board_active[row][col]))
+                        color = color_alive;
+                    else
+                        color = color_dead;
+
+                    /* Draw this cell. */
+                    SDL_SetRenderDrawColor(ren, color[0], color[1], color[2],
+                                           255);
+                    SDL_RenderFillRect(ren, &board_rects[row][col]);
+                }
+            }
+
+            SDL_RenderPresent(ren);
         }
 
-        /* Render. */
-        SDL_RenderPresent(ren);
+        /* TODO - use a timer; don't sleep. */
         SDL_Delay(frame_delay);
     }
 
@@ -248,6 +300,14 @@ populate_board(Cell (*board)[BOARD_WIDTH])
 }
 
 static void
+zero_board(Cell (*board)[BOARD_WIDTH])
+{
+    for (int32_t row = 0; row < BOARD_HEIGHT; row++)
+        for (int32_t col = 0; col < BOARD_WIDTH; col++)
+            board[row][col] = 0;
+}
+
+static void
 init_board_rects(SDL_Rect (*board_rects)[BOARD_WIDTH])
 {
     for (int32_t row = 0; row < BOARD_HEIGHT; row++) {
@@ -298,22 +358,22 @@ get_cell_by_coord(Cell (*board)[BOARD_WIDTH], int32_t x, int32_t y)
 static void
 advance_cell(int32_t row,
              int32_t col,
-             Cell (*board_cur)[BOARD_WIDTH],
-             Cell (*board_next)[BOARD_WIDTH])
+             Cell (*board_active)[BOARD_WIDTH],
+             Cell (*board_backbuffer)[BOARD_WIDTH])
 {
-    size_t neighbor_count = get_neighbor_count(board_cur, row, col);
-    if (is_alive(board_cur[row][col])) {
+    size_t neighbor_count = get_neighbor_count(board_active, row, col);
+    if (is_alive(board_active[row][col])) {
         if (neighbor_count < 2)
-            board_next[row][col] = DEAD;
+            board_backbuffer[row][col] = DEAD;
         else if (neighbor_count > 3)
-            board_next[row][col] = DEAD;
+            board_backbuffer[row][col] = DEAD;
         else
-            board_next[row][col] = ALIVE;
+            board_backbuffer[row][col] = ALIVE;
     } else { /* dead */
         if (neighbor_count == 3)
-            board_next[row][col] = ALIVE;
+            board_backbuffer[row][col] = ALIVE;
         else
-            board_next[row][col] = DEAD;
+            board_backbuffer[row][col] = DEAD;
     }
 }
 
