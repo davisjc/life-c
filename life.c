@@ -114,6 +114,7 @@ main(int argc, char *argv[])
                             frame_delay = 0;
                     } else if (e.key.keysym.sym == SDLK_r) {
                         populate_board(board_cur);
+                        frame_delay = FRAME_DELAY_INITIAL_MS;
                         if (!run)
                             run = 1;
                     }
