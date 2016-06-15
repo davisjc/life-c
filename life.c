@@ -16,12 +16,12 @@
 #define WINDOW_TITLE "Conway's Game of Life (Q to quit)"
 #define BOARD_WIDTH 50
 #define BOARD_HEIGHT 30
-#define SQUARE_SIZE 20
+#define CELL_SIZE 20
 #define GRID_SIZE 2
 #define BOARD_ALIVE_COLOR {230, 170, 20}
 #define BOARD_DEAD_COLOR {20, 20, 20}
-#define WINDOW_WIDTH_DEFAULT (GRID_SIZE + (SQUARE_SIZE + GRID_SIZE) * BOARD_WIDTH)
-#define WINDOW_HEIGHT_DEFAULT (GRID_SIZE + (SQUARE_SIZE + GRID_SIZE) * BOARD_HEIGHT)
+#define WINDOW_WIDTH_DEFAULT (GRID_SIZE + (CELL_SIZE + GRID_SIZE) * BOARD_WIDTH)
+#define WINDOW_HEIGHT_DEFAULT (GRID_SIZE + (CELL_SIZE + GRID_SIZE) * BOARD_HEIGHT)
 #define ALIVE 1
 #define DEAD 0
 #define LUCK_LIFE_START 15 /* out of 100 */
@@ -76,10 +76,10 @@ main(int argc, char *argv[])
     /* Specify SDL_Rect dimensions once for the board. */
     for (int row = 0; row < BOARD_HEIGHT; row++) {
         for (int col = 0; col < BOARD_WIDTH; col++) {
-            board_rects[row][col].x = GRID_SIZE + (SQUARE_SIZE + GRID_SIZE) * col;
-            board_rects[row][col].y = GRID_SIZE + (SQUARE_SIZE + GRID_SIZE) * row;
-            board_rects[row][col].w = SQUARE_SIZE;
-            board_rects[row][col].h = SQUARE_SIZE;
+            board_rects[row][col].x = GRID_SIZE + (CELL_SIZE + GRID_SIZE) * col;
+            board_rects[row][col].y = GRID_SIZE + (CELL_SIZE + GRID_SIZE) * row;
+            board_rects[row][col].w = CELL_SIZE;
+            board_rects[row][col].h = CELL_SIZE;
         }
     }
 
@@ -270,8 +270,8 @@ static get_neighbor_count(uint8_t (*board)[BOARD_WIDTH], int row, int col)
 static uint8_t *
 get_cell_by_coord(uint8_t (*board)[BOARD_WIDTH], int32_t x, int32_t y)
 {
-    uint32_t col = x / (GRID_SIZE + SQUARE_SIZE);
-    uint32_t row = y / (GRID_SIZE + SQUARE_SIZE);
+    uint32_t col = x / (GRID_SIZE + CELL_SIZE);
+    uint32_t row = y / (GRID_SIZE + CELL_SIZE);
     printf("%d %d\n", row, col); /* TODO remove */
     if (row >= BOARD_HEIGHT)
         row = BOARD_HEIGHT - 1;
