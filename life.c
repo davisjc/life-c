@@ -41,10 +41,10 @@ static Cell (*board_a)[BOARD_WIDTH];
 static Cell (*board_b)[BOARD_WIDTH];
 
 /* Track clicks */
-static Cell board_clicks[BOARD_HEIGHT][BOARD_WIDTH];
+static Cell (*board_clicks)[BOARD_WIDTH];
 
 /* SDL's perspective of board. */
-static SDL_Rect board_rects[BOARD_HEIGHT][BOARD_WIDTH];
+static SDL_Rect (*board_rects)[BOARD_WIDTH];
 
 /* Define some colors. */
 static Color color_grid[3] = COLOR_GRID;
@@ -104,8 +104,10 @@ main(int argc, char *argv[])
     srand(time(NULL));
 
     /* Initialize the board. */
-    board_a = malloc(BOARD_WIDTH * BOARD_HEIGHT);
-    board_b = malloc(BOARD_WIDTH * BOARD_HEIGHT);
+    board_a = malloc(BOARD_WIDTH * BOARD_HEIGHT * sizeof(**board_a));
+    board_b = malloc(BOARD_WIDTH * BOARD_HEIGHT * sizeof(**board_b));
+    board_clicks = malloc(BOARD_WIDTH * BOARD_HEIGHT * sizeof(**board_clicks));
+    board_rects = malloc(BOARD_WIDTH * BOARD_HEIGHT * sizeof(**board_rects));
     populate_board(board_a);
     init_board_rects(board_rects);
 
@@ -210,7 +212,7 @@ main(int argc, char *argv[])
          * Render.
          */
         if (dirty) {
-            /* Grid. */
+            /* Blank screen; this will become the grid. */
             SDL_SetRenderDrawColor(ren,
                                    color_grid[0], color_grid[1], color_grid[2],
                                    255);
