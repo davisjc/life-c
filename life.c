@@ -19,8 +19,8 @@
 #define CELL_SIZE 7
 #define GRID_SIZE 1
 #define COLOR_GRID {0, 0, 0}
-#define COLOR_ALIVE_A {255, 0, 150}
-#define COLOR_ALIVE_B {20, 255, 20}
+#define COLOR_ALIVE_A {255, 20, 0}
+#define COLOR_ALIVE_B {255, 150, 0}
 #define COLOR_DEAD {20, 20, 20}
 #define WINDOW_WIDTH_DEFAULT (GRID_SIZE + (CELL_SIZE + GRID_SIZE) * \
                               BOARD_WIDTH)
@@ -86,6 +86,9 @@ advance_cell(int32_t row,
              int32_t col,
              Cell (*board_active)[BOARD_WIDTH],
              Cell (*board_backbuffer)[BOARD_WIDTH]);
+
+static void
+get_color_for_cell(int32_t row, int32_t col, Color *color);
 
 #define is_alive(cell) (!!cell)
 
@@ -219,13 +222,8 @@ main(int argc, char *argv[])
                     Color *color = NULL;
                     Color color_alive[3];
                     if (is_alive(board_active[row][col])) {
+                        get_color_for_cell(row, col, color_alive);
                         color = color_alive;
-                        double proportion_b = (0.0 + col) / BOARD_WIDTH;
-                        double proportion_a = 1.0 - proportion_b;
-                        for (int i = 0; i < 3; i++) {
-                            color[i] = (Color)(proportion_a * color_alive_a[i] +
-                                               proportion_b * color_alive_b[i]);
-                        }
                     } else {
                         color = color_dead;
                     }
@@ -373,6 +371,17 @@ advance_cell(int32_t row,
             board_backbuffer[row][col] = ALIVE;
         else
             board_backbuffer[row][col] = DEAD;
+    }
+}
+
+static void
+get_color_for_cell(int32_t row, int32_t col, Color *color)
+{
+    double proportion_b = (0.0 + col) / BOARD_WIDTH;
+    double proportion_a = 1.0 - proportion_b;
+    for (int i = 0; i < 3; i++) {
+        color[i] = (Color)(proportion_a * color_alive_a[i] +
+                           proportion_b * color_alive_b[i]);
     }
 }
 
