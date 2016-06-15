@@ -14,13 +14,15 @@
 
 
 #define WINDOW_TITLE "Conway's Game of Life (Q to quit)"
-#define BOARD_WIDTH 50
-#define BOARD_HEIGHT 30
-#define CELL_SIZE 20
-#define GRID_SIZE 2
+#define BOARD_WIDTH 150
+#define BOARD_HEIGHT 80
+#define CELL_SIZE 7
+#define GRID_SIZE 1
+#define GRID_COLOR {0, 0, 0}
 #define BOARD_ALIVE_COLOR {230, 170, 20}
 #define BOARD_DEAD_COLOR {20, 20, 20}
-#define WINDOW_WIDTH_DEFAULT (GRID_SIZE + (CELL_SIZE + GRID_SIZE) * BOARD_WIDTH)
+#define WINDOW_WIDTH_DEFAULT (GRID_SIZE + (CELL_SIZE + GRID_SIZE) * \
+                              BOARD_WIDTH)
 #define WINDOW_HEIGHT_DEFAULT (GRID_SIZE + (CELL_SIZE + GRID_SIZE) * BOARD_HEIGHT)
 #define ALIVE 1
 #define DEAD 0
@@ -35,26 +37,27 @@ static uint8_t board_b[BOARD_HEIGHT][BOARD_WIDTH];
 /* SDL's perspective of board. */
 static SDL_Rect board_rects[BOARD_HEIGHT][BOARD_WIDTH];
 
+static uint8_t color_grid[3] = GRID_COLOR;
 static uint8_t color_alive[3] = BOARD_ALIVE_COLOR;
 static uint8_t color_dead[3] = BOARD_DEAD_COLOR;
 
-int
-static sdl_init(SDL_Window **win, /* populates with window */
-                SDL_Renderer **ren /* populates with renderer */);
+static int
+sdl_init(SDL_Window **win, /* populates with window */
+         SDL_Renderer **ren /* populates with renderer */);
 
-void
-static sdl_teardown(SDL_Window *win,
-                    SDL_Renderer *ren,
-                    const char *offending_func /* optional name of SDL func */);
+static void
+sdl_teardown(SDL_Window *win,
+             SDL_Renderer *ren,
+             const char *offending_func /* optional name of SDL func */);
 
-void
-static sdl_log_error(const char *offending_func);
+static void
+sdl_log_error(const char *offending_func);
 
-void
-static populate_board(uint8_t (*board)[BOARD_WIDTH]);
+static void
+populate_board(uint8_t (*board)[BOARD_WIDTH]);
 
-int
-static get_neighbor_count(uint8_t (*board)[BOARD_WIDTH], int row, int col);
+static int
+get_neighbor_count(uint8_t (*board)[BOARD_WIDTH], int row, int col);
 
 static uint8_t *
 get_cell_by_coord(uint8_t (*board)[BOARD_WIDTH], int32_t x, int32_t y);
@@ -133,7 +136,8 @@ main(int argc, char *argv[])
         }
 
         /* Draw grid. */
-        SDL_SetRenderDrawColor(ren, 0, 0, 0, 255);
+        SDL_SetRenderDrawColor(ren, color_grid[0], color_grid[1], color_grid[2],
+                               255);
         SDL_RenderClear(ren);
 
         for (int row = 0; row < BOARD_HEIGHT; row++) {
@@ -184,8 +188,8 @@ main(int argc, char *argv[])
     return 0;
 }
 
-int
-static sdl_init(SDL_Window **win, SDL_Renderer **ren)
+static int
+sdl_init(SDL_Window **win, SDL_Renderer **ren)
 {
     if (SDL_Init(SDL_INIT_VIDEO)) {
         fprintf(stderr, "SDL_Init error: %s\n", SDL_GetError());
@@ -218,8 +222,8 @@ static sdl_init(SDL_Window **win, SDL_Renderer **ren)
     return 0;
 }
 
-void
-static sdl_teardown(SDL_Window *win,
+static void
+sdl_teardown(SDL_Window *win,
                     SDL_Renderer *ren,
                     const char *offending_func)
 {
@@ -230,22 +234,22 @@ static sdl_teardown(SDL_Window *win,
     SDL_Quit();
 }
 
-void
-static sdl_log_error(const char *offending_func)
+static void
+sdl_log_error(const char *offending_func)
 {
     fprintf(stderr, "%s error: %s\n", offending_func, SDL_GetError());
 }
 
-void
-static populate_board(uint8_t (*board)[BOARD_WIDTH])
+static void
+populate_board(uint8_t (*board)[BOARD_WIDTH])
 {
     for (int row = 0; row < BOARD_HEIGHT; row++)
         for (int col = 0; col < BOARD_WIDTH; col++)
             board[row][col] = (rand() % 100 < LUCK_LIFE_START);
 }
 
-int
-static get_neighbor_count(uint8_t (*board)[BOARD_WIDTH], int row, int col)
+static int
+get_neighbor_count(uint8_t (*board)[BOARD_WIDTH], int row, int col)
 {
     int count = 0;
     if (0 < row)
