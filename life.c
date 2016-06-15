@@ -14,8 +14,8 @@
 
 
 #define WINDOW_TITLE "Conway's Game of Life (Q to quit)"
-#define BOARD_WIDTH 300
-#define BOARD_HEIGHT 150
+#define BOARD_WIDTH 250
+#define BOARD_HEIGHT 120
 #define SQUARE_SIZE 5
 #define BOARD_ALIVE_COLOR {230, 170, 20}
 #define BOARD_DEAD_COLOR {20, 20, 20}
