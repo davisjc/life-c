@@ -49,6 +49,9 @@ sdl_teardown(SDL_Window *win,
 static void
 sdl_log_error(const char *offending_func);
 
+static void
+populate_board(uint8_t (*board)[BOARD_WIDTH]);
+
 int
 get_neighbor_count(uint8_t (*board)[BOARD_WIDTH], int row, int col);
 
@@ -63,9 +66,10 @@ main(int argc, char *argv[])
 
     /* Set the board. */
     srand(time(NULL));
-    for (int row = 0; row < BOARD_HEIGHT; row++)
-        for (int col = 0; col < BOARD_WIDTH; col++)
-            board_a[row][col] = (rand() % 100 < LUCK_LIFE_START);
+
+    populate_board(board_a);
+
+    /* Specify SDL_Rect dimensions once for the board. */
     for (int row = 0; row < BOARD_HEIGHT; row++) {
         for (int col = 0; col < BOARD_WIDTH; col++) {
             board_rects[row][col].x = 1 + SQUARE_SIZE * col + col;
@@ -102,6 +106,10 @@ main(int argc, char *argv[])
                         frame_delay -= FRAME_DELAY_CHANGE_STEP_MS;
                         if (frame_delay < 0)
                             frame_delay = 0;
+                    } else if (e.key.keysym.sym == SDLK_r) {
+                        populate_board(board_cur);
+                        if (!run)
+                            run = 1;
                     }
                     break;
                 default:
@@ -210,6 +218,14 @@ static void
 sdl_log_error(const char *offending_func)
 {
     fprintf(stderr, "%s error: %s\n", offending_func, SDL_GetError());
+}
+
+static void
+populate_board(uint8_t (*board)[BOARD_WIDTH])
+{
+    for (int row = 0; row < BOARD_HEIGHT; row++)
+        for (int col = 0; col < BOARD_WIDTH; col++)
+            board[row][col] = (rand() % 100 < LUCK_LIFE_START);
 }
 
 int
