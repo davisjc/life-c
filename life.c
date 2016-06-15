@@ -62,11 +62,19 @@ populate_board(Cell (*board)[BOARD_WIDTH]);
 static void
 init_board_rects(SDL_Rect (*board_rects)[BOARD_WIDTH]);
 
-static int
-get_neighbor_count(Cell (*board)[BOARD_WIDTH], int row, int col);
+static uint32_t
+get_neighbor_count(Cell (*board)[BOARD_WIDTH], int32_t row, int32_t col);
 
 static Cell *
 get_cell_by_coord(Cell (*board)[BOARD_WIDTH], int32_t x, int32_t y);
+
+static void
+advance_cell(int32_t row,
+             int32_t col,
+             Cell (*board_cur)[BOARD_WIDTH],
+             Cell (*board_next)[BOARD_WIDTH]);
+
+#define is_alive(cell) (cell)
 
 int
 main(int argc, char *argv[])
@@ -141,11 +149,10 @@ main(int argc, char *argv[])
                                255);
         SDL_RenderClear(ren);
 
-        for (int row = 0; row < BOARD_HEIGHT; row++) {
-            for (int col = 0; col < BOARD_WIDTH; col++) {
+        for (int32_t row = 0; row < BOARD_HEIGHT; row++) {
+            for (int32_t col = 0; col < BOARD_WIDTH; col++) {
                 uint8_t *color;
-                int alive = board_cur[row][col];
-                if (alive)
+                if (is_alive(board_cur[row][col]))
                     color = color_alive;
                 else
                     color = color_dead;
@@ -155,22 +162,8 @@ main(int argc, char *argv[])
                 SDL_RenderFillRect(ren, &board_rects[row][col]);
 
                 /* Update the life/death status of this cell. */
-                if (run || step) {
-                    int neighbor_count = get_neighbor_count(board_cur, row, col);
-                    if (alive) {
-                        if (neighbor_count < 2)
-                            board_next[row][col] = DEAD;
-                        else if (neighbor_count > 3)
-                            board_next[row][col] = DEAD;
-                        else
-                            board_next[row][col] = ALIVE;
-                    } else { /* dead */
-                        if (neighbor_count == 3)
-                            board_next[row][col] = ALIVE;
-                        else
-                            board_next[row][col] = DEAD;
-                    }
-                }
+                if (run || step)
+                    advance_cell(row, col, board_cur, board_next);
             }
         }
 
@@ -244,16 +237,16 @@ sdl_log_error(const char *offending_func)
 static void
 populate_board(Cell (*board)[BOARD_WIDTH])
 {
-    for (int row = 0; row < BOARD_HEIGHT; row++)
-        for (int col = 0; col < BOARD_WIDTH; col++)
+    for (int32_t row = 0; row < BOARD_HEIGHT; row++)
+        for (int32_t col = 0; col < BOARD_WIDTH; col++)
             board[row][col] = (rand() % 100 < LUCK_LIFE_START);
 }
 
 static void
 init_board_rects(SDL_Rect (*board_rects)[BOARD_WIDTH])
 {
-    for (int row = 0; row < BOARD_HEIGHT; row++) {
-        for (int col = 0; col < BOARD_WIDTH; col++) {
+    for (int32_t row = 0; row < BOARD_HEIGHT; row++) {
+        for (int32_t col = 0; col < BOARD_WIDTH; col++) {
             board_rects[row][col].x = GRID_SIZE + (CELL_SIZE + GRID_SIZE) * col;
             board_rects[row][col].y = GRID_SIZE + (CELL_SIZE + GRID_SIZE) * row;
             board_rects[row][col].w = CELL_SIZE;
@@ -262,10 +255,10 @@ init_board_rects(SDL_Rect (*board_rects)[BOARD_WIDTH])
     }
 }
 
-static int
-get_neighbor_count(Cell (*board)[BOARD_WIDTH], int row, int col)
+static uint32_t
+get_neighbor_count(Cell (*board)[BOARD_WIDTH], int32_t row, int32_t col)
 {
-    int count = 0;
+    uint32_t count = 0;
     if (0 < row)
         count += board[row - 1][col];
     if (row < BOARD_HEIGHT - 1)
@@ -295,5 +288,27 @@ get_cell_by_coord(Cell (*board)[BOARD_WIDTH], int32_t x, int32_t y)
     if (col >= BOARD_WIDTH)
         col = BOARD_WIDTH - 1;
     return board[row] + col;
+}
+
+static void
+advance_cell(int32_t row,
+             int32_t col,
+             Cell (*board_cur)[BOARD_WIDTH],
+             Cell (*board_next)[BOARD_WIDTH])
+{
+    int32_t neighbor_count = get_neighbor_count(board_cur, row, col);
+    if (is_alive(board_cur[row][col])) {
+        if (neighbor_count < 2)
+            board_next[row][col] = DEAD;
+        else if (neighbor_count > 3)
+            board_next[row][col] = DEAD;
+        else
+            board_next[row][col] = ALIVE;
+    } else { /* dead */
+        if (neighbor_count == 3)
+            board_next[row][col] = ALIVE;
+        else
+            board_next[row][col] = DEAD;
+    }
 }
 
