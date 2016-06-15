@@ -36,8 +36,8 @@ typedef uint8_t Cell;
 typedef uint8_t Color;
 
 /* Use two boards to maintain a backbuffer. */
-static Cell board_a[BOARD_HEIGHT][BOARD_WIDTH];
-static Cell board_b[BOARD_HEIGHT][BOARD_WIDTH];
+static Cell (*board_a)[BOARD_WIDTH];
+static Cell (*board_b)[BOARD_WIDTH];
 
 /* Track clicks */
 static Cell board_clicks[BOARD_HEIGHT][BOARD_WIDTH];
@@ -49,6 +49,8 @@ static SDL_Rect board_rects[BOARD_HEIGHT][BOARD_WIDTH];
 static Color color_grid[3] = GRID_COLOR;
 static Color color_alive[3] = BOARD_ALIVE_COLOR;
 static Color color_dead[3] = BOARD_DEAD_COLOR;
+
+static int32_t frame_delay = FRAME_DELAY_INITIAL_MS;
 
 static int
 sdl_init(SDL_Window **win, /* populates with window */
@@ -96,13 +98,11 @@ main(int argc, char *argv[])
 
     srand(time(NULL));
 
-    /* Set the board. */
+    /* Initialize the board. */
+    board_a = malloc(BOARD_WIDTH * BOARD_HEIGHT);
+    board_b = malloc(BOARD_WIDTH * BOARD_HEIGHT);
     populate_board(board_a);
-
-    /* Specify SDL_Rect dimensions once for the board. */
     init_board_rects(board_rects);
-
-    int32_t frame_delay = FRAME_DELAY_INITIAL_MS;
 
     Cell (*board_active)[BOARD_WIDTH] = board_a;
     Cell (*board_backbuffer)[BOARD_WIDTH] = board_b;
