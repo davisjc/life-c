@@ -30,9 +30,12 @@
 #define FRAME_DELAY_INITIAL_MS 30
 #define FRAME_DELAY_CHANGE_STEP_MS 10
 
-/* Game board: 0 = dead; 1 = alive */
-static uint8_t board_a[BOARD_HEIGHT][BOARD_WIDTH];
-static uint8_t board_b[BOARD_HEIGHT][BOARD_WIDTH];
+/* A cell is just a byte: 0 = dead; 1 = alive */
+typedef uint8_t Cell;
+
+/* Use two boards to maintain a backbuffer. */
+static Cell board_a[BOARD_HEIGHT][BOARD_WIDTH];
+static Cell board_b[BOARD_HEIGHT][BOARD_WIDTH];
 
 /* SDL's perspective of board. */
 static SDL_Rect board_rects[BOARD_HEIGHT][BOARD_WIDTH];
@@ -54,16 +57,16 @@ static void
 sdl_log_error(const char *offending_func);
 
 static void
-populate_board(uint8_t (*board)[BOARD_WIDTH]);
+populate_board(Cell (*board)[BOARD_WIDTH]);
 
 static void
 init_board_rects(SDL_Rect (*board_rects)[BOARD_WIDTH]);
 
 static int
-get_neighbor_count(uint8_t (*board)[BOARD_WIDTH], int row, int col);
+get_neighbor_count(Cell (*board)[BOARD_WIDTH], int row, int col);
 
-static uint8_t *
-get_cell_by_coord(uint8_t (*board)[BOARD_WIDTH], int32_t x, int32_t y);
+static Cell *
+get_cell_by_coord(Cell (*board)[BOARD_WIDTH], int32_t x, int32_t y);
 
 int
 main(int argc, char *argv[])
@@ -84,8 +87,8 @@ main(int argc, char *argv[])
 
     int32_t frame_delay = FRAME_DELAY_INITIAL_MS;
 
-    uint8_t (*board_cur)[BOARD_WIDTH] = board_a;
-    uint8_t (*board_next)[BOARD_WIDTH] = board_b;
+    Cell (*board_cur)[BOARD_WIDTH] = board_a;
+    Cell (*board_next)[BOARD_WIDTH] = board_b;
     int run = 1;
     int quit = 0;
     while (!quit) {
@@ -122,7 +125,9 @@ main(int argc, char *argv[])
                 {
                     int32_t x = e.button.x;
                     int32_t y = e.button.y;
-                    uint8_t *cell = get_cell_by_coord(board_cur, x, y);
+                    Cell *cell = get_cell_by_coord(board_cur, x, y);
+
+                    /* Flip this cell's alive/dead state. */
                     *cell = !*cell;
                 }
                     break;
@@ -170,7 +175,7 @@ main(int argc, char *argv[])
         }
 
         if (run || step) {
-            uint8_t (*board_temp)[BOARD_WIDTH] = board_cur;
+            Cell (*board_temp)[BOARD_WIDTH] = board_cur;
             board_cur = board_next;
             board_next = board_temp;
         }
@@ -237,7 +242,7 @@ sdl_log_error(const char *offending_func)
 }
 
 static void
-populate_board(uint8_t (*board)[BOARD_WIDTH])
+populate_board(Cell (*board)[BOARD_WIDTH])
 {
     for (int row = 0; row < BOARD_HEIGHT; row++)
         for (int col = 0; col < BOARD_WIDTH; col++)
@@ -258,7 +263,7 @@ init_board_rects(SDL_Rect (*board_rects)[BOARD_WIDTH])
 }
 
 static int
-get_neighbor_count(uint8_t (*board)[BOARD_WIDTH], int row, int col)
+get_neighbor_count(Cell (*board)[BOARD_WIDTH], int row, int col)
 {
     int count = 0;
     if (0 < row)
@@ -280,8 +285,8 @@ get_neighbor_count(uint8_t (*board)[BOARD_WIDTH], int row, int col)
     return count;
 }
 
-static uint8_t *
-get_cell_by_coord(uint8_t (*board)[BOARD_WIDTH], int32_t x, int32_t y)
+static Cell *
+get_cell_by_coord(Cell (*board)[BOARD_WIDTH], int32_t x, int32_t y)
 {
     uint32_t col = x / (GRID_SIZE + CELL_SIZE);
     uint32_t row = y / (GRID_SIZE + CELL_SIZE);
