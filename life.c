@@ -122,18 +122,13 @@ main(int argc, char *argv[])
                 {
                     int32_t x = e.button.x;
                     int32_t y = e.button.y;
-                    printf("%d %d\n", x, y); /* TODO remove */
-                    get_cell_by_coord(board_next, x, y);
+                    uint8_t *cell = get_cell_by_coord(board_cur, x, y);
+                    *cell = !*cell;
                 }
                     break;
                 default:
                     break;
             }
-        }
-
-        if (!run && !step) {
-            SDL_Delay(frame_delay);
-            continue;
         }
 
         /* Draw grid. */
@@ -154,26 +149,30 @@ main(int argc, char *argv[])
                 SDL_RenderFillRect(ren, &board_rects[row][col]);
 
                 /* Update the life/death status of this cell. */
-                int neighbor_count = get_neighbor_count(board_cur, row, col);
-                if (alive) {
-                    if (neighbor_count < 2)
-                        board_next[row][col] = DEAD;
-                    else if (neighbor_count > 3)
-                        board_next[row][col] = DEAD;
-                    else
-                        board_next[row][col] = ALIVE;
-                } else { /* dead */
-                    if (neighbor_count == 3)
-                        board_next[row][col] = ALIVE;
-                    else
-                        board_next[row][col] = DEAD;
+                if (run || step) {
+                    int neighbor_count = get_neighbor_count(board_cur, row, col);
+                    if (alive) {
+                        if (neighbor_count < 2)
+                            board_next[row][col] = DEAD;
+                        else if (neighbor_count > 3)
+                            board_next[row][col] = DEAD;
+                        else
+                            board_next[row][col] = ALIVE;
+                    } else { /* dead */
+                        if (neighbor_count == 3)
+                            board_next[row][col] = ALIVE;
+                        else
+                            board_next[row][col] = DEAD;
+                    }
                 }
             }
         }
 
-        uint8_t (*board_temp)[BOARD_WIDTH] = board_cur;
-        board_cur = board_next;
-        board_next = board_temp;
+        if (run || step) {
+            uint8_t (*board_temp)[BOARD_WIDTH] = board_cur;
+            board_cur = board_next;
+            board_next = board_temp;
+        }
 
         SDL_RenderPresent(ren);
         SDL_Delay(frame_delay);
@@ -272,12 +271,10 @@ get_cell_by_coord(uint8_t (*board)[BOARD_WIDTH], int32_t x, int32_t y)
 {
     uint32_t col = x / (GRID_SIZE + CELL_SIZE);
     uint32_t row = y / (GRID_SIZE + CELL_SIZE);
-    printf("%d %d\n", row, col); /* TODO remove */
     if (row >= BOARD_HEIGHT)
         row = BOARD_HEIGHT - 1;
     if (col >= BOARD_WIDTH)
         col = BOARD_WIDTH - 1;
-    printf("%d\n", board[row][col]); /* TODO remove */
     return board[row] + col;
 }
 
