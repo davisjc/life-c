@@ -56,6 +56,9 @@ sdl_log_error(const char *offending_func);
 static void
 populate_board(uint8_t (*board)[BOARD_WIDTH]);
 
+static void
+init_board_rects(SDL_Rect (*board_rects)[BOARD_WIDTH]);
+
 static int
 get_neighbor_count(uint8_t (*board)[BOARD_WIDTH], int row, int col);
 
@@ -77,14 +80,7 @@ main(int argc, char *argv[])
     populate_board(board_a);
 
     /* Specify SDL_Rect dimensions once for the board. */
-    for (int row = 0; row < BOARD_HEIGHT; row++) {
-        for (int col = 0; col < BOARD_WIDTH; col++) {
-            board_rects[row][col].x = GRID_SIZE + (CELL_SIZE + GRID_SIZE) * col;
-            board_rects[row][col].y = GRID_SIZE + (CELL_SIZE + GRID_SIZE) * row;
-            board_rects[row][col].w = CELL_SIZE;
-            board_rects[row][col].h = CELL_SIZE;
-        }
-    }
+    init_board_rects(board_rects);
 
     int32_t frame_delay = FRAME_DELAY_INITIAL_MS;
 
@@ -246,6 +242,19 @@ populate_board(uint8_t (*board)[BOARD_WIDTH])
     for (int row = 0; row < BOARD_HEIGHT; row++)
         for (int col = 0; col < BOARD_WIDTH; col++)
             board[row][col] = (rand() % 100 < LUCK_LIFE_START);
+}
+
+static void
+init_board_rects(SDL_Rect (*board_rects)[BOARD_WIDTH])
+{
+    for (int row = 0; row < BOARD_HEIGHT; row++) {
+        for (int col = 0; col < BOARD_WIDTH; col++) {
+            board_rects[row][col].x = GRID_SIZE + (CELL_SIZE + GRID_SIZE) * col;
+            board_rects[row][col].y = GRID_SIZE + (CELL_SIZE + GRID_SIZE) * row;
+            board_rects[row][col].w = CELL_SIZE;
+            board_rects[row][col].h = CELL_SIZE;
+        }
+    }
 }
 
 static int
