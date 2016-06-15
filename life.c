@@ -24,12 +24,15 @@
 #define COLOR_DEAD {20, 20, 20}
 #define WINDOW_WIDTH_DEFAULT (GRID_SIZE + (CELL_SIZE + GRID_SIZE) * \
                               BOARD_WIDTH)
-#define WINDOW_HEIGHT_DEFAULT (GRID_SIZE + (CELL_SIZE + GRID_SIZE) * BOARD_HEIGHT)
+#define WINDOW_HEIGHT_DEFAULT (GRID_SIZE + (CELL_SIZE + GRID_SIZE) * \
+                               BOARD_HEIGHT)
 #define ALIVE 1
 #define DEAD 0
 #define LUCK_LIFE_START 15 /* out of 100 */
 #define FRAME_DELAY_INITIAL_MS 30
 #define FRAME_DELAY_CHANGE_STEP_MS 10
+#define FPS 60
+#define TICKS_PER_FRAME 1000.0 / FPS
 
 typedef uint8_t Cell; /* 0 = dead; 1 = alive */
 typedef Cell (*Board)[BOARD_WIDTH];
@@ -116,6 +119,7 @@ main(int argc, char *argv[])
     int run = 1;
     int quit = 0;
     while (!quit) {
+        int32_t ticks_start = SDL_GetTicks();
         int step = 0;
         int restart = 0;
         int clear = 0;
@@ -240,8 +244,11 @@ main(int argc, char *argv[])
             SDL_RenderPresent(ren);
         }
 
-        /* TODO - use a timer; don't sleep. */
-        SDL_Delay(frame_delay);
+        int32_t ticks_end = SDL_GetTicks();
+        int32_t ticks_ellapsed = ticks_end - ticks_start;
+        /* FIXME - not done; this just updates the cells at the frame rate. */
+        if (ticks_ellapsed < TICKS_PER_FRAME)
+            SDL_Delay(TICKS_PER_FRAME - ticks_ellapsed);
     }
 
     printf("Exiting...\n");
