@@ -18,9 +18,10 @@
 #define BOARD_HEIGHT 80
 #define CELL_SIZE 7
 #define GRID_SIZE 1
-#define GRID_COLOR {0, 0, 0}
-#define BOARD_ALIVE_COLOR {230, 170, 20}
-#define BOARD_DEAD_COLOR {20, 20, 20}
+#define COLOR_GRID {0, 0, 0}
+#define COLOR_ALIVE_A {255, 0, 150}
+#define COLOR_ALIVE_B {20, 255, 20}
+#define COLOR_DEAD {20, 20, 20}
 #define WINDOW_WIDTH_DEFAULT (GRID_SIZE + (CELL_SIZE + GRID_SIZE) * \
                               BOARD_WIDTH)
 #define WINDOW_HEIGHT_DEFAULT (GRID_SIZE + (CELL_SIZE + GRID_SIZE) * BOARD_HEIGHT)
@@ -46,9 +47,10 @@ static Cell board_clicks[BOARD_HEIGHT][BOARD_WIDTH];
 static SDL_Rect board_rects[BOARD_HEIGHT][BOARD_WIDTH];
 
 /* Define some colors. */
-static Color color_grid[3] = GRID_COLOR;
-static Color color_alive[3] = BOARD_ALIVE_COLOR;
-static Color color_dead[3] = BOARD_DEAD_COLOR;
+static Color color_grid[3] = COLOR_GRID;
+static Color color_alive_a[3] = COLOR_ALIVE_A;
+static Color color_alive_b[3] = COLOR_ALIVE_B;
+static Color color_dead[3] = COLOR_DEAD;
 
 static int32_t frame_delay = FRAME_DELAY_INITIAL_MS;
 
@@ -214,11 +216,19 @@ main(int argc, char *argv[])
             /* Cells. */
             for (int32_t row = 0; row < BOARD_HEIGHT; row++) {
                 for (int32_t col = 0; col < BOARD_WIDTH; col++) {
-                    Color *color;
-                    if (is_alive(board_active[row][col]))
+                    Color *color = NULL;
+                    Color color_alive[3];
+                    if (is_alive(board_active[row][col])) {
                         color = color_alive;
-                    else
+                        double proportion_b = (0.0 + col) / BOARD_WIDTH;
+                        double proportion_a = 1.0 - proportion_b;
+                        for (int i = 0; i < 3; i++) {
+                            color[i] = (Color)(proportion_a * color_alive_a[i] +
+                                               proportion_b * color_alive_b[i]);
+                        }
+                    } else {
                         color = color_dead;
+                    }
 
                     /* Draw this cell. */
                     SDL_SetRenderDrawColor(ren, color[0], color[1], color[2],
