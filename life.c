@@ -20,7 +20,7 @@
 #define GRID_SIZE 1
 #define COLOR_GRID {0, 0, 0}
 #define COLOR_ALIVE_A {255, 20, 0}
-#define COLOR_ALIVE_B {255, 150, 0}
+#define COLOR_ALIVE_B {255, 170, 0}
 #define COLOR_DEAD {20, 20, 20}
 #define WINDOW_WIDTH_DEFAULT (GRID_SIZE + (CELL_SIZE + GRID_SIZE) * \
                               BOARD_WIDTH)
@@ -182,7 +182,7 @@ main(int argc, char *argv[])
         /*
          * Game logic.
          */
-        int user_provoked_tick = (step || restart || clear || clicked);
+        int user_provoked_tick = (step || restart || clear);
         int next_tick_due = (SDL_GetTicks() - ticks_last_step >= tick_interval);
         if (user_provoked_tick || next_tick_due) {
             if (restart)
