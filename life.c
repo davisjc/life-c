@@ -85,182 +85,26 @@ static Cell *
 get_cell_by_coord(Board board, int32_t x, int32_t y);
 
 static void
-advance_cell(int32_t row,
-             int32_t col,
-             Board board_active,
-             Board board_backbuffer);
+advance_all_cells(Board board_in, Board board_out);
+
+static int
+toggle_cells_from_clicks(Board board_clicks, Board board);
+
+static void
+advance_cell(int32_t row, int32_t col, Board board_in, Board board_out);
 
 static void
 get_color_for_cell(int32_t row, int32_t col, Color *color);
 
+static void
+render_cells(SDL_Renderer *ren, BoardRect rects, Board board);
+
 #define is_alive(cell) (!!cell)
 
-int
-main(int argc, char *argv[])
-{
-    /* Initialize SDL. */
-    SDL_Window *win = NULL;
-    SDL_Renderer *ren = NULL;
-    if (sdl_init(&win, &ren))
-        return 1;
-
-    srand(time(NULL));
-
-    /* Initialize the board. */
-    board_active = malloc(BOARD_WIDTH * BOARD_HEIGHT *
-                          sizeof(**board_active));
-    board_backbuffer = malloc(BOARD_WIDTH * BOARD_HEIGHT *
-                              sizeof(**board_backbuffer));
-    board_clicks = malloc(BOARD_WIDTH * BOARD_HEIGHT * sizeof(**board_clicks));
-    board_rects = malloc(BOARD_WIDTH * BOARD_HEIGHT * sizeof(**board_rects));
-    populate_board(board_active);
-    init_board_rects(board_rects);
-
-    /* Track the last time the game state advanced. */
-    int32_t ticks_last_step = 0;
-
-    int run = 1; /* keep at 1 to keep running the game at tick_interval */
-    int quit = 0; /* set to 1 to exit the game loop */
-    while (!quit) {
-        int32_t ticks_start = SDL_GetTicks();
-
-        int step = 0; /* set to 1 if the game should advance 1 tick */
-        int restart = 0; /* set to 1 if the board should be reset */
-        int clear = 0; /* set to 1 if the board should be cleared */
-        int clicked = 0; /* set to 1 if a click happens */
-        int dirty = 0; /* set to 1 if a render should happen */
-        zero_board(board_clicks);
-
-        /*
-         * Handle events.
-         */
-        SDL_Event e;
-        while (SDL_PollEvent(&e)) {
-            switch (e.type) {
-                case SDL_KEYDOWN:
-                    if (e.key.keysym.sym == SDLK_q) {
-                        quit = 1;
-                    } else if (e.key.keysym.sym == SDLK_SPACE) {
-                        run = !run;
-                    } else if (e.key.keysym.sym == SDLK_s) {
-                        run = 0;
-                        step = 1;
-                    } else if (e.key.keysym.sym == SDLK_LEFTBRACKET) {
-                        tick_interval += TICK_RATE_STEP;
-                        if (tick_interval > INT_MAX - TICK_RATE_STEP)
-                            tick_interval = INT_MAX - TICK_RATE_STEP;
-                    } else if (e.key.keysym.sym == SDLK_RIGHTBRACKET) {
-                        tick_interval -= TICK_RATE_STEP;
-                        if (tick_interval < 0)
-                            tick_interval = 0;
-                    } else if (e.key.keysym.sym == SDLK_r) {
-                        restart = 1;
-                        run = 1;
-                        tick_interval = TICK_RATE_INITIAL_MS;
-                    } else if (e.key.keysym.sym == SDLK_c) {
-                        clear = 1;
-                        run = 0;
-                        step = 1;
-                    }
-                    break;
-                case SDL_MOUSEBUTTONDOWN:
-                {
-                    int32_t x = e.button.x;
-                    int32_t y = e.button.y;
-                    Cell *cell = get_cell_by_coord(board_clicks, x, y);
-
-                    /* Flip this cell's clicked/unclicked state. */
-                    *cell = !*cell;
-                    clicked = 1;
-                }
-                    break;
-                default:
-                    break;
-            }
-        }
-
-        /*
-         * Game logic.
-         */
-        int user_provoked_tick = (step || restart || clear);
-        int next_tick_due = (SDL_GetTicks() - ticks_last_step >= tick_interval);
-        if (user_provoked_tick || next_tick_due) {
-            if (restart)
-                populate_board(board_active);
-            else if (clear)
-                zero_board(board_active);
-
-            if (run || step) {
-                /* Write the updated life/death statuses to the backbuffer. */
-                for (int32_t row = 0; row < BOARD_HEIGHT; row++) {
-                    for (int32_t col = 0; col < BOARD_WIDTH; col++) {
-                        advance_cell(row, col, board_active, board_backbuffer);
-                    }
-                }
-
-                /* Make the backbuffer active. */
-                Board board_temp = board_active;
-                board_active = board_backbuffer;
-                board_backbuffer = board_temp;
-            }
-
-            dirty = 1;
-            ticks_last_step = SDL_GetTicks();
-        }
-
-        if (clicked) {
-            for (int32_t row = 0; row < BOARD_HEIGHT; row++) {
-                for (int32_t col = 0; col < BOARD_WIDTH; col++) {
-                    if (board_clicks[row][col]) {
-                        /* Kill if alive; revive if dead. */
-                        board_active[row][col] = !board_active[row][col];
-                        dirty = 1;
-                    }
-                }
-            }
-        }
-
-        /*
-         * Render.
-         */
-        if (dirty) {
-            /* Blank screen; this will become the grid. */
-            SDL_SetRenderDrawColor(ren,
-                                   color_grid[0], color_grid[1], color_grid[2],
-                                   255);
-            SDL_RenderClear(ren);
-
-            /* Cells. */
-            for (int32_t row = 0; row < BOARD_HEIGHT; row++) {
-                for (int32_t col = 0; col < BOARD_WIDTH; col++) {
-                    Color *color = NULL;
-                    Color color_alive[3];
-                    if (is_alive(board_active[row][col])) {
-                        get_color_for_cell(row, col, color_alive);
-                        color = color_alive;
-                    } else {
-                        color = color_dead;
-                    }
-
-                    /* Draw this cell. */
-                    SDL_SetRenderDrawColor(ren, color[0], color[1], color[2],
-                                           255);
-                    SDL_RenderFillRect(ren, &board_rects[row][col]);
-                }
-            }
-
-            SDL_RenderPresent(ren);
-        }
-
-        /* Cap the frame rate. */
-        int32_t ticks_ellapsed = SDL_GetTicks() - ticks_start;
-        if (ticks_ellapsed < TICKS_PER_FRAME)
-            SDL_Delay(TICKS_PER_FRAME - ticks_ellapsed);
-    }
-
-    printf("Exiting...\n");
-    sdl_teardown(win, ren, NULL);
-    return 0;
+#define swap(t, a, b) { \
+    t temp = a; \
+    a = b; \
+    b = temp; \
 }
 
 static int
@@ -380,24 +224,47 @@ get_cell_by_coord(Board board, int32_t x, int32_t y)
 }
 
 static void
-advance_cell(int32_t row,
-             int32_t col,
-             Board board_active,
-             Board board_backbuffer)
+advance_all_cells(Board board_in, Board board_out)
 {
-    size_t neighbor_count = get_neighbor_count(board_active, row, col);
-    if (is_alive(board_active[row][col])) {
+    for (int32_t row = 0; row < BOARD_HEIGHT; row++) {
+        for (int32_t col = 0; col < BOARD_WIDTH; col++) {
+            advance_cell(row, col, board_in, board_out);
+        }
+    }
+}
+
+static int
+toggle_cells_from_clicks(Board board_clicks, Board board)
+{
+    int dirty = 0;
+    for (int32_t row = 0; row < BOARD_HEIGHT; row++) {
+        for (int32_t col = 0; col < BOARD_WIDTH; col++) {
+            if (board_clicks[row][col]) {
+                /* Kill if alive; revive if dead. */
+                board_active[row][col] = !board_active[row][col];
+                dirty = 1;
+            }
+        }
+    }
+    return dirty;
+}
+
+static void
+advance_cell(int32_t row, int32_t col, Board board_in, Board board_out)
+{
+    size_t neighbor_count = get_neighbor_count(board_in, row, col);
+    if (is_alive(board_in[row][col])) {
         if (neighbor_count < 2)
-            board_backbuffer[row][col] = DEAD;
+            board_out[row][col] = DEAD;
         else if (neighbor_count > 3)
-            board_backbuffer[row][col] = DEAD;
+            board_out[row][col] = DEAD;
         else
-            board_backbuffer[row][col] = ALIVE;
+            board_out[row][col] = ALIVE;
     } else { /* dead */
         if (neighbor_count == 3)
-            board_backbuffer[row][col] = ALIVE;
+            board_out[row][col] = ALIVE;
         else
-            board_backbuffer[row][col] = DEAD;
+            board_out[row][col] = DEAD;
     }
 }
 
@@ -410,5 +277,165 @@ get_color_for_cell(int32_t row, int32_t col, Color *color)
         color[i] = (Color)(proportion_a * color_alive_a[i] +
                            proportion_b * color_alive_b[i]);
     }
+}
+
+static void
+render_cells(SDL_Renderer *ren, BoardRect rects, Board board)
+{
+    for (int32_t row = 0; row < BOARD_HEIGHT; row++) {
+        for (int32_t col = 0; col < BOARD_WIDTH; col++) {
+            Color *color = NULL;
+            Color color_alive[3];
+            if (is_alive(board[row][col])) {
+                get_color_for_cell(row, col, color_alive);
+                color = color_alive;
+            } else {
+                color = color_dead;
+            }
+
+            /* Draw this cell. */
+            SDL_SetRenderDrawColor(ren, color[0], color[1], color[2],
+                                   255);
+            SDL_RenderFillRect(ren, &rects[row][col]);
+        }
+    }
+}
+
+int
+main(int argc, char *argv[])
+{
+    /* Initialize SDL. */
+    SDL_Window *win = NULL;
+    SDL_Renderer *ren = NULL;
+    if (sdl_init(&win, &ren))
+        return 1;
+
+    srand(time(NULL));
+
+    /* Initialize the board. */
+    board_active = malloc(BOARD_WIDTH * BOARD_HEIGHT *
+                          sizeof(**board_active));
+    board_backbuffer = malloc(BOARD_WIDTH * BOARD_HEIGHT *
+                              sizeof(**board_backbuffer));
+    board_clicks = malloc(BOARD_WIDTH * BOARD_HEIGHT * sizeof(**board_clicks));
+    board_rects = malloc(BOARD_WIDTH * BOARD_HEIGHT * sizeof(**board_rects));
+    populate_board(board_active);
+    init_board_rects(board_rects);
+
+    /* Track the last time the game state advanced. */
+    int32_t ticks_last_step = 0;
+
+    int run = 1; /* keep at 1 to keep running the game at tick_interval */
+    int quit = 0; /* set to 1 to exit the game loop */
+    while (!quit) {
+        int32_t ticks_start = SDL_GetTicks();
+
+        int step = 0; /* set to 1 if the game should advance 1 tick */
+        int restart = 0; /* set to 1 if the board should be reset */
+        int clear = 0; /* set to 1 if the board should be cleared */
+        int clicked = 0; /* set to 1 if a click happens */
+        int dirty = 0; /* set to 1 if a render should happen */
+        zero_board(board_clicks);
+
+        /*
+         * Handle events.
+         */
+        SDL_Event e;
+        while (SDL_PollEvent(&e)) {
+            switch (e.type) {
+                case SDL_KEYDOWN:
+                    if (e.key.keysym.sym == SDLK_q) {
+                        quit = 1;
+                    } else if (e.key.keysym.sym == SDLK_SPACE) {
+                        run = !run;
+                    } else if (e.key.keysym.sym == SDLK_s) {
+                        run = 0;
+                        step = 1;
+                    } else if (e.key.keysym.sym == SDLK_LEFTBRACKET) {
+                        tick_interval += TICK_RATE_STEP;
+                        if (tick_interval > INT_MAX - TICK_RATE_STEP)
+                            tick_interval = INT_MAX - TICK_RATE_STEP;
+                    } else if (e.key.keysym.sym == SDLK_RIGHTBRACKET) {
+                        tick_interval -= TICK_RATE_STEP;
+                        if (tick_interval < 0)
+                            tick_interval = 0;
+                    } else if (e.key.keysym.sym == SDLK_r) {
+                        restart = 1;
+                        run = 1;
+                        tick_interval = TICK_RATE_INITIAL_MS;
+                    } else if (e.key.keysym.sym == SDLK_c) {
+                        clear = 1;
+                        run = 0;
+                        step = 1;
+                    }
+                    break;
+                case SDL_MOUSEBUTTONDOWN:
+                {
+                    int32_t x = e.button.x;
+                    int32_t y = e.button.y;
+                    Cell *cell = get_cell_by_coord(board_clicks, x, y);
+
+                    /* Flip this cell's clicked/unclicked state. */
+                    *cell = !*cell;
+                    clicked = 1;
+                }
+                    break;
+                default:
+                    break;
+            }
+        }
+
+        /*
+         * Game logic.
+         */
+        int user_provoked_tick = (step || restart || clear);
+        int next_tick_due = (SDL_GetTicks() - ticks_last_step >= tick_interval);
+        if (user_provoked_tick || next_tick_due) {
+            if (restart)
+                populate_board(board_active);
+            else if (clear)
+                zero_board(board_active);
+
+            if (run || step) {
+                /* Write the updated life/death statuses to the backbuffer. */
+                advance_all_cells(board_active, board_backbuffer);
+
+                /* Make the backbuffer active. */
+                swap(Board, board_active, board_backbuffer);
+            }
+
+            dirty = 1;
+            ticks_last_step = SDL_GetTicks();
+        }
+
+        if (clicked) {
+            if (toggle_cells_from_clicks(board_clicks, board_active))
+                dirty = 1;
+        }
+
+        /*
+         * Render.
+         */
+        if (dirty) {
+            /* Blank screen; this will become the grid. */
+            SDL_SetRenderDrawColor(ren,
+                                   color_grid[0], color_grid[1], color_grid[2],
+                                   255);
+            SDL_RenderClear(ren);
+
+            render_cells(ren, board_rects, board_active);
+
+            SDL_RenderPresent(ren);
+        }
+
+        /* Cap the frame rate. */
+        int32_t ticks_ellapsed = SDL_GetTicks() - ticks_start;
+        if (ticks_ellapsed < TICKS_PER_FRAME)
+            SDL_Delay(TICKS_PER_FRAME - ticks_ellapsed);
+    }
+
+    printf("Exiting...\n");
+    sdl_teardown(win, ren, NULL);
+    return 0;
 }
 
