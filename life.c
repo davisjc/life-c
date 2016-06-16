@@ -29,10 +29,10 @@
 #define ALIVE 1
 #define DEAD 0
 #define LUCK_LIFE_START 15 /* out of 100 */
-#define FRAME_DELAY_INITIAL_MS 30
-#define FRAME_DELAY_CHANGE_STEP_MS 10
-#define FPS 60
-#define TICKS_PER_FRAME 1000.0 / FPS
+#define FPS_MAX 60
+#define TICKS_PER_FRAME 1000.0 / FPS_MAX
+#define TICK_RATE_INITIAL_MS 30
+#define TICK_RATE_STEP 10
 
 typedef uint8_t Cell; /* 0 = dead; 1 = alive */
 typedef Cell (*Board)[BOARD_WIDTH];
@@ -55,7 +55,7 @@ static Color color_alive_a[3] = COLOR_ALIVE_A;
 static Color color_alive_b[3] = COLOR_ALIVE_B;
 static Color color_dead[3] = COLOR_DEAD;
 
-static int32_t frame_delay = FRAME_DELAY_INITIAL_MS;
+static int32_t tick_interval = TICK_RATE_INITIAL_MS;
 
 static int
 sdl_init(SDL_Window **win, /* populates with window */
@@ -116,19 +116,23 @@ main(int argc, char *argv[])
     populate_board(board_active);
     init_board_rects(board_rects);
 
-    int run = 1;
-    int quit = 0;
+    /* Track the last time the game state advanced. */
+    int32_t ticks_last_step = 0;
+
+    int run = 1; /* keep at 1 to keep running the game at tick_interval */
+    int quit = 0; /* set to 1 to exit the game loop */
     while (!quit) {
         int32_t ticks_start = SDL_GetTicks();
-        int step = 0;
-        int restart = 0;
-        int clear = 0;
-        int clicked = 0;
-        int dirty = 0;
+
+        int step = 0; /* set to 1 if the game should advance 1 tick */
+        int restart = 0; /* set to 1 if the board should be reset */
+        int clear = 0; /* set to 1 if the board should be cleared */
+        int clicked = 0; /* set to 1 if a click happens */
+        int dirty = 0; /* set to 1 if a render should happen */
         zero_board(board_clicks);
 
         /*
-         * Events.
+         * Handle events.
          */
         SDL_Event e;
         while (SDL_PollEvent(&e)) {
@@ -142,17 +146,17 @@ main(int argc, char *argv[])
                         run = 0;
                         step = 1;
                     } else if (e.key.keysym.sym == SDLK_LEFTBRACKET) {
-                        frame_delay += FRAME_DELAY_CHANGE_STEP_MS;
-                        if (frame_delay > INT_MAX - FRAME_DELAY_CHANGE_STEP_MS)
-                            frame_delay = INT_MAX - FRAME_DELAY_CHANGE_STEP_MS;
+                        tick_interval += TICK_RATE_STEP;
+                        if (tick_interval > INT_MAX - TICK_RATE_STEP)
+                            tick_interval = INT_MAX - TICK_RATE_STEP;
                     } else if (e.key.keysym.sym == SDLK_RIGHTBRACKET) {
-                        frame_delay -= FRAME_DELAY_CHANGE_STEP_MS;
-                        if (frame_delay < 0)
-                            frame_delay = 0;
+                        tick_interval -= TICK_RATE_STEP;
+                        if (tick_interval < 0)
+                            tick_interval = 0;
                     } else if (e.key.keysym.sym == SDLK_r) {
                         restart = 1;
                         run = 1;
-                        frame_delay = FRAME_DELAY_INITIAL_MS;
+                        tick_interval = TICK_RATE_INITIAL_MS;
                     } else if (e.key.keysym.sym == SDLK_c) {
                         clear = 1;
                         run = 0;
@@ -176,25 +180,32 @@ main(int argc, char *argv[])
         }
 
         /*
-         * Logic.
+         * Game logic.
          */
-        if (restart)
-            populate_board(board_active);
-        else if (clear)
-            zero_board(board_active);
+        int user_provoked_tick = (step || restart || clear || clicked);
+        int next_tick_due = (SDL_GetTicks() - ticks_last_step >= tick_interval);
+        if (user_provoked_tick || next_tick_due) {
+            if (restart)
+                populate_board(board_active);
+            else if (clear)
+                zero_board(board_active);
 
-        if (run || step) {
-            /* Write the updated life/death statuses to the backbuffer. */
-            for (int32_t row = 0; row < BOARD_HEIGHT; row++) {
-                for (int32_t col = 0; col < BOARD_WIDTH; col++) {
-                    advance_cell(row, col, board_active, board_backbuffer);
+            if (run || step) {
+                /* Write the updated life/death statuses to the backbuffer. */
+                for (int32_t row = 0; row < BOARD_HEIGHT; row++) {
+                    for (int32_t col = 0; col < BOARD_WIDTH; col++) {
+                        advance_cell(row, col, board_active, board_backbuffer);
+                    }
                 }
+
+                /* Make the backbuffer active. */
+                Board board_temp = board_active;
+                board_active = board_backbuffer;
+                board_backbuffer = board_temp;
             }
 
-            /* Make the backbuffer active. */
-            Board board_temp = board_active;
-            board_active = board_backbuffer;
-            board_backbuffer = board_temp;
+            dirty = 1;
+            ticks_last_step = SDL_GetTicks();
         }
 
         if (clicked) {
@@ -208,9 +219,6 @@ main(int argc, char *argv[])
                 }
             }
         }
-
-        if (restart || run || step)
-            dirty = 1;
 
         /*
          * Render.
@@ -244,9 +252,8 @@ main(int argc, char *argv[])
             SDL_RenderPresent(ren);
         }
 
-        int32_t ticks_end = SDL_GetTicks();
-        int32_t ticks_ellapsed = ticks_end - ticks_start;
-        /* FIXME - not done; this just updates the cells at the frame rate. */
+        /* Cap the frame rate. */
+        int32_t ticks_ellapsed = SDL_GetTicks() - ticks_start;
         if (ticks_ellapsed < TICKS_PER_FRAME)
             SDL_Delay(TICKS_PER_FRAME - ticks_ellapsed);
     }
