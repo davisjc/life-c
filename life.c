@@ -265,13 +265,24 @@ sdl_init(SDL_Window **win, SDL_Renderer **ren)
         return 1;
     }
 
-    if (SDL_CreateWindowAndRenderer(WINDOW_WIDTH_DEFAULT,
-                                    WINDOW_HEIGHT_DEFAULT,
-                                    SDL_WINDOW_OPENGL,
-                                    win,
-                                    ren)) {
-        fprintf(stderr, "SDL_CreateWindowAndRenderer error: %s\n",
-                SDL_GetError());
+    *win = SDL_CreateWindow(WINDOW_TITLE,
+                            SDL_WINDOWPOS_CENTERED,
+                            SDL_WINDOWPOS_CENTERED,
+                            WINDOW_WIDTH_DEFAULT, /* width */
+                            WINDOW_HEIGHT_DEFAULT, /* height */
+                            SDL_WINDOW_OPENGL);
+    if (win == NULL) {
+        fprintf(stderr, "SDL_CreateWindow error: %s\n", SDL_GetError());
+        SDL_Quit();
+        return 1;
+    }
+
+    *ren = SDL_CreateRenderer(*win,
+                              -1, /* use any driver */
+                              (SDL_RENDERER_ACCELERATED |
+                               SDL_RENDERER_PRESENTVSYNC));
+    if (ren == NULL) {
+        fprintf(stderr, "Could not create renderer: %s\n", SDL_GetError());
         SDL_Quit();
         return 1;
     }
