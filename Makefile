@@ -1,14 +1,22 @@
 
 CC = clang
-SOURCES = src/$(wildcard *.c)
-HEADERS = src/$(wildcard *.h)
-CFLAGS = -Wall -g -lm -lSDL2
+CFLAGS = -Wall -g
+LDFLAGS = -lm -lSDL2
+SRC = src
+BIN = bin
+SOURCES = $(wildcard $(SRC)/*.c)
+HEADERS = $(wildcard $(SRC)/*.h)
+EXE = $(BIN)/life
 
-all : bin bin/life
+all : $(BIN) $(EXE)
 
-bin :
-	mkdir -p bin
+$(BIN) :
+	mkdir -p $(BIN)
 
-bin/life : $(SOURCES) $(HEADERS)
-	$(CC) $(CFLAGS) src/life.c src/actions.c src/render.c -o bin/life
+$(EXE) : $(SOURCES) $(HEADERS)
+	$(CC) $(CFLAGS) $(LDFLAGS) $(SOURCES) -o $(EXE)
+
+.PHONY : clean
+clean :
+	rm -f $(EXE)
 
