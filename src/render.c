@@ -62,7 +62,7 @@ get_color_for_cell(int32_t row, int32_t col, Color *color)
     extern Color color_alive_a[3];
     extern Color color_alive_b[3];
 
-    double proportion_b = (0.0 + col) / BOARD_WIDTH;
+    double proportion_b = (0.0 + col) / BOARD_W_INIT;
     double proportion_a = 1.0 - proportion_b;
     for (int i = 0; i < 3; i++) {
         color[i] = (Color)(proportion_a * color_alive_a[i] +
@@ -74,8 +74,8 @@ void
 render_cells(SDL_Renderer *ren, BoardRect rects, Board board)
 {
     extern Color color_dead[3];
-    for (int32_t row = 0; row < BOARD_HEIGHT; row++) {
-        for (int32_t col = 0; col < BOARD_WIDTH; col++) {
+    for (int32_t row = 0; row < BOARD_H_INIT; row++) {
+        for (int32_t col = 0; col < BOARD_W_INIT; col++) {
             Color *color = NULL;
             Color color_alive[3];
 

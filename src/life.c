@@ -39,19 +39,18 @@ main(int argc, char *argv[])
     /* Initialize SDL. */
     SDL_Window *win = NULL;
     SDL_Renderer *ren = NULL;
-    if (sdl_init(WINDOW_TITLE, WINDOW_WIDTH_DEFAULT, WINDOW_HEIGHT_DEFAULT,
-                 &win, &ren))
+    if (sdl_init(WINDOW_TITLE, WINDOW_W_INIT, WINDOW_H_INIT, &win, &ren))
         return 1;
 
     srand(time(NULL));
 
     /* Initialize the board. */
-    board_active = malloc(BOARD_WIDTH * BOARD_HEIGHT *
+    board_active = malloc(BOARD_W_INIT * BOARD_H_INIT *
                           sizeof(**board_active));
-    board_backbuffer = malloc(BOARD_WIDTH * BOARD_HEIGHT *
+    board_backbuffer = malloc(BOARD_W_INIT * BOARD_H_INIT *
                               sizeof(**board_backbuffer));
-    board_clicks = malloc(BOARD_WIDTH * BOARD_HEIGHT * sizeof(**board_clicks));
-    board_rects = malloc(BOARD_WIDTH * BOARD_HEIGHT * sizeof(**board_rects));
+    board_clicks = malloc(BOARD_W_INIT * BOARD_H_INIT * sizeof(**board_clicks));
+    board_rects = malloc(BOARD_W_INIT * BOARD_H_INIT * sizeof(**board_rects));
     populate_board(board_active);
     init_board_rects(board_rects);
 

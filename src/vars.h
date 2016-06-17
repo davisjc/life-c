@@ -8,18 +8,16 @@
 #define LIFE_VARS_H
 
 #define WINDOW_TITLE "Conway's Game of Life (Q to quit)"
-#define BOARD_WIDTH 150
-#define BOARD_HEIGHT 80
+#define BOARD_W_INIT 150
+#define BOARD_H_INIT 80
 #define CELL_SIZE 7
 #define GRID_SIZE 1
 #define COLOR_GRID {0, 0, 0}
 #define COLOR_ALIVE_A {255, 20, 0}
 #define COLOR_ALIVE_B {255, 170, 0}
 #define COLOR_DEAD {20, 20, 20}
-#define WINDOW_WIDTH_DEFAULT (GRID_SIZE + (CELL_SIZE + GRID_SIZE) * \
-                              BOARD_WIDTH)
-#define WINDOW_HEIGHT_DEFAULT (GRID_SIZE + (CELL_SIZE + GRID_SIZE) * \
-                               BOARD_HEIGHT)
+#define WINDOW_W_INIT (GRID_SIZE + (CELL_SIZE + GRID_SIZE) *  BOARD_W_INIT)
+#define WINDOW_H_INIT (GRID_SIZE + (CELL_SIZE + GRID_SIZE) * BOARD_H_INIT)
 #define ALIVE 1
 #define DEAD 0
 #define LUCK_LIFE_START 15 /* out of 100 */
