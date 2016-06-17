@@ -1,15 +1,12 @@
 
 CC = clang
 CFLAGS = -Wall -g -lm -lSDL2
-BIN = ./bin
-SOURCES = $(wildcard *.c)
-TARGETS = $(addprefix $(BIN)/, $(SOURCES:.c=))
 
-all : $(BIN) $(TARGETS)
+all : bin bin/life
 
-$(BIN) :
-	mkdir -p $(BIN)
+bin :
+	mkdir -p bin
 
-$(BIN)/% : %.c
-	$(CC) $(CFLAGS) $< -o $@
+bin/life : src/life.c
+	$(CC) $(CFLAGS) src/life.c src/actions.c src/render.c -o bin/life
 
