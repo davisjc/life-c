@@ -34,22 +34,22 @@ size_t
 get_neighbor_count(Board board, int32_t row, int32_t col)
 {
     uint32_t count = 0;
-    if (0 < row)
-        count += board[row - 1][col];
-    if (row < BOARD_HEIGHT - 1)
-        count += board[row + 1][col];
-    if (0 < col)
-        count += board[row][col - 1];
-    if (col < BOARD_WIDTH - 1)
-        count += board[row][col + 1];
-    if (0 < row && 0 < col)
-        count += board[row - 1][col - 1];
-    if (0 < row && col < BOARD_WIDTH - 1)
-        count += board[row - 1][col + 1];
-    if (row < BOARD_HEIGHT - 1 && 0 < col)
-        count += board[row + 1][col - 1];
-    if (row < BOARD_HEIGHT - 1 && col < BOARD_WIDTH - 1)
-        count += board[row + 1][col + 1];
+
+    /* Wrap around the edge of the board. */
+    int32_t row_prev = (0 < row) ? row - 1 : BOARD_HEIGHT - 1;
+    int32_t row_next = (row < BOARD_HEIGHT - 1) ? row + 1 : 0;
+    int32_t col_prev = (0 < col) ? col - 1 : BOARD_WIDTH - 1;
+    int32_t col_next = (col < BOARD_WIDTH - 1) ? col + 1 : 0;
+
+    count += board[row_prev][col]; /* upper */
+    count += board[row_next][col]; /* lower */
+    count += board[row][col_prev]; /* left */
+    count += board[row][col_next]; /* right */
+    count += board[row_prev][col_prev]; /* upper-left */
+    count += board[row_prev][col_next]; /* upper-right */
+    count += board[row_next][col_prev]; /* lower-left */
+    count += board[row_next][col_next]; /* lower-right */
+
     return count;
 }
 
