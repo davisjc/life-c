@@ -117,6 +117,10 @@ main(int argc, char *argv[])
                     clicked = 1;
                 }
                     break;
+                case SDL_WINDOWEVENT:
+                    if (e.window.event == SDL_WINDOWEVENT_SIZE_CHANGED) {
+                    }
+                    break;
                 default:
                     break;
             }

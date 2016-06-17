@@ -7,6 +7,8 @@
 #ifndef LIFE_VARS_H
 #define LIFE_VARS_H
 
+#include "macros.h"
+
 #define WINDOW_TITLE "Conway's Game of Life (Q to quit)"
 #define BOARD_W_INIT 150
 #define BOARD_H_INIT 80
@@ -18,8 +20,8 @@
 #define COLOR_ALIVE_A {255, 20, 0}
 #define COLOR_ALIVE_B {255, 170, 0}
 #define COLOR_DEAD {20, 20, 20}
-#define WINDOW_W_INIT (GRID_SIZE + (CELL_SIZE + GRID_SIZE) *  BOARD_W_INIT)
-#define WINDOW_H_INIT (GRID_SIZE + (CELL_SIZE + GRID_SIZE) * BOARD_H_INIT)
+#define WINDOW_W_INIT cell_length_to_px(BOARD_W_INIT)
+#define WINDOW_H_INIT cell_length_to_px(BOARD_H_INIT)
 #define ALIVE 1
 #define DEAD 0
 #define LUCK_LIFE_START 15 /* out of 100 */
