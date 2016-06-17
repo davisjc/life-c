@@ -8,6 +8,7 @@
 
 #include "SDL2/SDL.h"
 #include "actions.h"
+#include "macros.h"
 #include "render.h"
 #include "types.h"
 #include <limits.h>

@@ -34,11 +34,5 @@ toggle_cells_from_clicks(Board board_clicks, Board board);
 void
 advance_cell(int32_t row, int32_t col, Board board_in, Board board_out);
 
-#define swap(t, a, b) { \
-    t temp = a; \
-    a = b; \
-    b = temp; \
-}
-
 #endif /* LIFE_ACTIONS_H */
 
