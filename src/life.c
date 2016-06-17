@@ -34,6 +34,9 @@ Color color_dead[3] = COLOR_DEAD;
 
 static int32_t tick_interval = TICK_RATE_INITIAL_MS;
 
+static uint32_t board_w = BOARD_W_INIT;
+static uint32_t board_h = BOARD_H_INIT;
+
 int
 main(int argc, char *argv[])
 {
@@ -46,13 +49,13 @@ main(int argc, char *argv[])
     srand(time(NULL));
 
     /* Initialize the board. */
-    board_active = malloc(BOARD_W_INIT * BOARD_H_INIT *
+    board_active = malloc(BOARD_W_MAX * BOARD_H_MAX *
                           sizeof(**board_active));
-    board_backbuffer = malloc(BOARD_W_INIT * BOARD_H_INIT *
+    board_backbuffer = malloc(BOARD_W_MAX * BOARD_H_MAX *
                               sizeof(**board_backbuffer));
-    board_clicks = malloc(BOARD_W_INIT * BOARD_H_INIT * sizeof(**board_clicks));
-    board_rects = malloc(BOARD_W_INIT * BOARD_H_INIT * sizeof(**board_rects));
-    populate_board(board_active);
+    board_clicks = malloc(BOARD_W_MAX * BOARD_H_MAX * sizeof(**board_clicks));
+    board_rects = malloc(BOARD_W_MAX * BOARD_H_MAX * sizeof(**board_rects));
+    populate_board(board_h, board_w, board_active);
     init_board_rects(board_rects);
 
     /* Track the last time the game state advanced. */
@@ -68,7 +71,7 @@ main(int argc, char *argv[])
         int clear = 0; /* set to 1 if the board should be cleared */
         int clicked = 0; /* set to 1 if a click happens */
         int dirty = 0; /* set to 1 if a render should happen */
-        zero_board(board_clicks);
+        zero_board(board_h, board_w, board_clicks);
 
         /*
          * Handle events.
@@ -106,7 +109,8 @@ main(int argc, char *argv[])
                 {
                     int32_t x = e.button.x;
                     int32_t y = e.button.y;
-                    Cell *cell = get_cell_by_coord(board_clicks, x, y);
+                    Cell *cell = get_cell_by_coord(board_h, board_w, x, y,
+                                                   board_clicks);
 
                     /* Flip this cell's clicked/unclicked state. */
                     *cell = !*cell;
@@ -125,13 +129,14 @@ main(int argc, char *argv[])
         int next_tick_due = (SDL_GetTicks() - ticks_last_step >= tick_interval);
         if (user_provoked_tick || next_tick_due) {
             if (restart)
-                populate_board(board_active);
+                populate_board(board_h, board_w, board_active);
             else if (clear)
-                zero_board(board_active);
+                zero_board(board_h, board_w, board_active);
 
             if (run || step) {
                 /* Write the updated life/death statuses to the backbuffer. */
-                advance_all_cells(board_active, board_backbuffer);
+                advance_all_cells(board_h, board_w,
+                                  board_active, board_backbuffer);
 
                 /* Make the backbuffer active. */
                 swap(Board, board_active, board_backbuffer);
@@ -142,7 +147,8 @@ main(int argc, char *argv[])
         }
 
         if (clicked) {
-            if (toggle_cells_from_clicks(board_clicks, board_active))
+            if (toggle_cells_from_clicks(board_h, board_w,
+                                         board_clicks, board_active))
                 dirty = 1;
         }
 
@@ -156,7 +162,7 @@ main(int argc, char *argv[])
                                    255);
             SDL_RenderClear(ren);
 
-            render_cells(ren, board_rects, board_active);
+            render_cells(ren, board_rects, board_active, board_h, board_w);
 
             SDL_RenderPresent(ren);
         }

@@ -23,10 +23,12 @@ void
 sdl_log_error(const char *offending_func_name);
 
 void
-get_color_for_cell(int32_t row, int32_t col, Color *color);
+get_color_for_cell(int32_t row, int32_t col, int32_t board_h, int32_t board_w,
+                   Color *color);
 
 void
-render_cells(SDL_Renderer *ren, BoardRect rects, Board board);
+render_cells(SDL_Renderer *ren, BoardRect rects, Board board,
+             int32_t board_h, int32_t board_w);
 
 #endif /* LIFE_RENDER_H */
 

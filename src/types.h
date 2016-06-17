@@ -13,9 +13,9 @@
 
 typedef uint8_t Cell; /* 0 = dead; 1 = alive */
 
-typedef Cell (*Board)[BOARD_W_INIT];
+typedef Cell (*Board)[BOARD_W_MAX];
 
-typedef SDL_Rect (*BoardRect)[BOARD_W_INIT];
+typedef SDL_Rect (*BoardRect)[BOARD_W_MAX];
 
 typedef uint8_t Color;
 

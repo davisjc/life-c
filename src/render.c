@@ -57,12 +57,13 @@ sdl_log_error(const char *offending_func_name)
 }
 
 void
-get_color_for_cell(int32_t row, int32_t col, Color *color)
+get_color_for_cell(int32_t row, int32_t col, int32_t board_h, int32_t board_w,
+                   Color *color)
 {
     extern Color color_alive_a[3];
     extern Color color_alive_b[3];
 
-    double proportion_b = (0.0 + col) / BOARD_W_INIT;
+    double proportion_b = (0.0 + col) / board_w;
     double proportion_a = 1.0 - proportion_b;
     for (int i = 0; i < 3; i++) {
         color[i] = (Color)(proportion_a * color_alive_a[i] +
@@ -71,17 +72,18 @@ get_color_for_cell(int32_t row, int32_t col, Color *color)
 }
 
 void
-render_cells(SDL_Renderer *ren, BoardRect rects, Board board)
+render_cells(SDL_Renderer *ren, BoardRect rects, Board board,
+             int32_t board_h, int32_t board_w)
 {
     extern Color color_dead[3];
-    for (int32_t row = 0; row < BOARD_H_INIT; row++) {
-        for (int32_t col = 0; col < BOARD_W_INIT; col++) {
+    for (int32_t row = 0; row < board_h; row++) {
+        for (int32_t col = 0; col < board_w; col++) {
             Color *color = NULL;
             Color color_alive[3];
 
             int is_alive = board[row][col];
             if (is_alive) {
-                get_color_for_cell(row, col, color_alive);
+                get_color_for_cell(row, col, board_h, board_w, color_alive);
                 color = color_alive;
             } else {
                 color = color_dead;
