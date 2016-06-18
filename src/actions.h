@@ -17,6 +17,11 @@ void
 zero_board(int32_t board_h, int32_t board_w, Board board);
 
 void
+zero_board_region(int32_t board_h1, int32_t board_w1,
+                  int32_t board_h2, int32_t board_w2,
+                  Board board);
+
+void
 init_board_rects(BoardRect board_rects);
 
 size_t

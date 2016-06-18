@@ -1,5 +1,6 @@
 
 #include "actions.h"
+#include "macros.h"
 
 void
 populate_board(int32_t board_h, int32_t board_w, Board board)
@@ -18,10 +19,30 @@ zero_board(int32_t board_h, int32_t board_w, Board board)
 }
 
 void
+zero_board_region(int32_t board_h1, int32_t board_w1,
+                  int32_t board_h2, int32_t board_w2,
+                  Board board)
+{
+    int32_t board_h_low = board_h1;
+    int32_t board_h_high = board_h2;
+    if (board_h_high < board_h_low)
+        swap(int32_t, board_h_high, board_h_low);
+    int32_t board_w_low = board_w1;
+    int32_t board_w_high = board_w2;
+    if (board_w_high < board_w_low)
+        swap(int32_t, board_w_high, board_w_low);
+
+    for (int32_t row = 0; row < board_h_high; row++)
+        for (int32_t col = 0; col < board_w_high; col++)
+            if (row >= board_h_low || col >= board_w_low)
+                board[row][col] = 0;
+}
+
+void
 init_board_rects(BoardRect board_rects)
 {
-    for (int32_t row = 0; row < BOARD_H_INIT; row++) {
-        for (int32_t col = 0; col < BOARD_W_INIT; col++) {
+    for (int32_t row = 0; row < BOARD_H_MAX; row++) {
+        for (int32_t col = 0; col < BOARD_W_MAX; col++) {
             board_rects[row][col].x = GRID_SIZE + (CELL_SIZE + GRID_SIZE) * col;
             board_rects[row][col].y = GRID_SIZE + (CELL_SIZE + GRID_SIZE) * row;
             board_rects[row][col].w = CELL_SIZE;

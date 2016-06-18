@@ -72,8 +72,8 @@ get_color_for_cell(int32_t row, int32_t col, int32_t board_h, int32_t board_w,
 }
 
 void
-render_cells(SDL_Renderer *ren, BoardRect rects, Board board,
-             int32_t board_h, int32_t board_w)
+render_cells(SDL_Renderer *ren, int32_t board_h, int32_t board_w,
+             BoardRect rects, Board board)
 {
     extern Color color_dead[3];
     for (int32_t row = 0; row < board_h; row++) {

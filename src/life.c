@@ -49,12 +49,12 @@ main(int argc, char *argv[])
     srand(time(NULL));
 
     /* Initialize the board. */
-    board_active = malloc(BOARD_W_MAX * BOARD_H_MAX *
+    board_active = calloc(BOARD_W_MAX * BOARD_H_MAX,
                           sizeof(**board_active));
-    board_backbuffer = malloc(BOARD_W_MAX * BOARD_H_MAX *
+    board_backbuffer = calloc(BOARD_W_MAX * BOARD_H_MAX,
                               sizeof(**board_backbuffer));
-    board_clicks = malloc(BOARD_W_MAX * BOARD_H_MAX * sizeof(**board_clicks));
-    board_rects = malloc(BOARD_W_MAX * BOARD_H_MAX * sizeof(**board_rects));
+    board_clicks = calloc(BOARD_W_MAX * BOARD_H_MAX, sizeof(**board_clicks));
+    board_rects = calloc(BOARD_W_MAX * BOARD_H_MAX, sizeof(**board_rects));
     populate_board(board_h, board_w, board_active);
     init_board_rects(board_rects);
 
@@ -65,6 +65,11 @@ main(int argc, char *argv[])
     int quit = 0; /* set to 1 to exit the game loop */
     while (!quit) {
         int32_t ticks_start = SDL_GetTicks();
+
+        /* Unless changed by resizing, use the current board dimensions for the
+         * next iteration. */
+        uint32_t board_w_next = board_w;
+        uint32_t board_h_next = board_h;
 
         int step = 0; /* set to 1 if the game should advance 1 tick */
         int restart = 0; /* set to 1 if the board should be reset */
@@ -106,25 +111,37 @@ main(int argc, char *argv[])
                     }
                     break;
                 case SDL_MOUSEBUTTONDOWN:
-                {
-                    int32_t x = e.button.x;
-                    int32_t y = e.button.y;
-                    Cell *cell = get_cell_by_coord(board_h, board_w, x, y,
-                                                   board_clicks);
+                    if (e.button.button == SDL_BUTTON_LEFT) {
+                        int32_t x = e.button.x;
+                        int32_t y = e.button.y;
+                        Cell *cell = get_cell_by_coord(board_h, board_w, x, y,
+                                                       board_clicks);
 
-                    /* Flip this cell's clicked/unclicked state. */
-                    *cell = !*cell;
-                    clicked = 1;
-                }
+                        /* Flip this cell's clicked/unclicked state. */
+                        *cell = !*cell;
+                        clicked = 1;
+                    }
                     break;
                 case SDL_WINDOWEVENT:
                     if (e.window.event == SDL_WINDOWEVENT_SIZE_CHANGED) {
+                        uint32_t win_w_next = e.window.data1;
+                        uint32_t win_h_next = e.window.data2;
+                        board_w_next = px_to_cell_length(win_w_next);
+                        board_h_next = px_to_cell_length(win_h_next);
                     }
                     break;
                 default:
                     break;
             }
         }
+
+        /* Clear any region of the board that may have been cropped. */
+        zero_board_region(board_h, board_w, board_h_next, board_w_next,
+                          board_active);
+        zero_board_region(board_h, board_w, board_h_next, board_w_next,
+                          board_backbuffer);
+        zero_board_region(board_h, board_w, board_h_next, board_w_next,
+                          board_clicks);
 
         /*
          * Game logic.
@@ -133,13 +150,13 @@ main(int argc, char *argv[])
         int next_tick_due = (SDL_GetTicks() - ticks_last_step >= tick_interval);
         if (user_provoked_tick || next_tick_due) {
             if (restart)
-                populate_board(board_h, board_w, board_active);
+                populate_board(board_h_next, board_w_next, board_active);
             else if (clear)
-                zero_board(board_h, board_w, board_active);
+                zero_board(board_h_next, board_w_next, board_active);
 
             if (run || step) {
                 /* Write the updated life/death statuses to the backbuffer. */
-                advance_all_cells(board_h, board_w,
+                advance_all_cells(board_h_next, board_w_next,
                                   board_active, board_backbuffer);
 
                 /* Make the backbuffer active. */
@@ -151,7 +168,7 @@ main(int argc, char *argv[])
         }
 
         if (clicked) {
-            if (toggle_cells_from_clicks(board_h, board_w,
+            if (toggle_cells_from_clicks(board_h_next, board_w_next,
                                          board_clicks, board_active))
                 dirty = 1;
         }
@@ -166,10 +183,15 @@ main(int argc, char *argv[])
                                    255);
             SDL_RenderClear(ren);
 
-            render_cells(ren, board_rects, board_active, board_h, board_w);
+            render_cells(ren, board_h_next, board_w_next,
+                         board_rects, board_active);
 
             SDL_RenderPresent(ren);
         }
+
+        /* Update current board dimensions. */
+        board_h = board_h_next;
+        board_w = board_w_next;
 
         /* Cap the frame rate. */
         int32_t ticks_ellapsed = SDL_GetTicks() - ticks_start;

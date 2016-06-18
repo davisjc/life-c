@@ -27,8 +27,8 @@ get_color_for_cell(int32_t row, int32_t col, int32_t board_h, int32_t board_w,
                    Color *color);
 
 void
-render_cells(SDL_Renderer *ren, BoardRect rects, Board board,
-             int32_t board_h, int32_t board_w);
+render_cells(SDL_Renderer *ren, int32_t board_h, int32_t board_w,
+             BoardRect rects, Board board);
 
 #endif /* LIFE_RENDER_H */
 
