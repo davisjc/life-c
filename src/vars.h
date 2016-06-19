@@ -12,10 +12,10 @@
 #define WINDOW_TITLE "Conway's Game of Life (Q to quit)"
 #define BOARD_W_INIT 150
 #define BOARD_H_INIT 80
-#define BOARD_W_MAX 1000
-#define BOARD_H_MAX 1000
-#define CELL_SIZE 7
-#define GRID_SIZE 1
+#define BOARD_W_MAX 500
+#define BOARD_H_MAX 500
+#define CELL_SIZE 1
+#define GRID_SIZE 0
 #define COLOR_GRID {0, 0, 0}
 #define COLOR_ALIVE_A {255, 20, 0}
 #define COLOR_ALIVE_B {255, 170, 0}

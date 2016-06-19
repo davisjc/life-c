@@ -127,7 +127,11 @@ main(int argc, char *argv[])
                         uint32_t win_w_next = e.window.data1;
                         uint32_t win_h_next = e.window.data2;
                         board_w_next = px_to_cell_length(win_w_next);
+                        if (board_w_next > BOARD_W_MAX)
+                            board_w_next = BOARD_W_MAX;
                         board_h_next = px_to_cell_length(win_h_next);
+                        if (board_h_next > BOARD_H_MAX)
+                            board_h_next = BOARD_H_MAX;
                     }
                     break;
                 default:
