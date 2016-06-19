@@ -139,13 +139,15 @@ main(int argc, char *argv[])
             }
         }
 
-        /* Clear any region of the board that may have been cropped. */
-        zero_board_region(board_h, board_w, board_h_next, board_w_next,
-                          board_active);
-        zero_board_region(board_h, board_w, board_h_next, board_w_next,
-                          board_backbuffer);
-        zero_board_region(board_h, board_w, board_h_next, board_w_next,
-                          board_clicks);
+        if (board_h_next < board_h || board_w_next < board_w) {
+            /* Clear cropped regions of board. */
+            zero_board_region(board_h, board_w, board_h_next, board_w_next,
+                              board_active);
+            zero_board_region(board_h, board_w, board_h_next, board_w_next,
+                              board_backbuffer);
+            zero_board_region(board_h, board_w, board_h_next, board_w_next,
+                              board_clicks);
+        }
 
         /*
          * Game logic.
