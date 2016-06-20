@@ -1,7 +1,5 @@
 
-#include "SDL2/SDL.h"
 #include "render.h"
-#include <stdio.h>
 
 int
 sdl_init(char *title, int width, int height,

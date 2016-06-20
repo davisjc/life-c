@@ -7,6 +7,7 @@
 #ifndef LIFE_ACTIONS_H
 #define LIFE_ACTIONS_H
 
+#include "macros.h"
 #include "types.h"
 #include "vars.h"
 
