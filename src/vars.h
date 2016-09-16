@@ -29,6 +29,7 @@
 #define TICKS_PER_FRAME 1000.0 / FPS_MAX
 #define TICK_RATE_INITIAL_MS 30
 #define TICK_RATE_STEP 10
+#define FPS_SAMPLE_COUNT 10
 
 #endif /* LIFE_VARS_H */
 
