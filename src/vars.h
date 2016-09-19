@@ -9,6 +9,7 @@
 
 #include "macros.h"
 
+
 #define WINDOW_TITLE "Conway's Game of Life (Q to quit)"
 #define BOARD_W_INIT 140
 #define BOARD_H_INIT 80

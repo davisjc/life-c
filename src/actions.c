@@ -1,6 +1,13 @@
 
 #include "actions.h"
 
+#include <stdint.h>
+
+#include "macros.h"
+#include "types.h"
+#include "vars.h"
+
+
 void
 populate_board(int32_t board_h, int32_t board_w, Board board)
 {

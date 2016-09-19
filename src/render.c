@@ -1,6 +1,14 @@
 
 #include "render.h"
 
+#include <stdint.h>
+#include <stdio.h>
+
+#include "SDL2/SDL.h"
+#include "types.h"
+#include "vars.h"
+
+
 int
 sdl_init(char *title, int width, int height,
          SDL_Window **win, SDL_Renderer **ren)

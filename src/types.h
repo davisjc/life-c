@@ -7,9 +7,11 @@
 #ifndef LIFE_TYPES_H
 #define LIFE_TYPES_H
 
+#include <stdint.h>
+
 #include "SDL2/SDL.h"
 #include "vars.h"
-#include <stdint.h>
+
 
 typedef uint8_t Cell; /* 0 = dead; 1 = alive */
 

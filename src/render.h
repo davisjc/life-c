@@ -7,10 +7,10 @@
 #ifndef LIFE_RENDER_H
 #define LIFE_RENDER_H
 
-#include "SDL2/SDL.h"
+#include <stdint.h>
+
 #include "types.h"
-#include "vars.h"
-#include <stdio.h>
+
 
 int
 sdl_init(char *title, int width, int height,

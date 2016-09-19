@@ -6,15 +6,17 @@
  * @author: Johnathan Davis
  */
 
+#include <limits.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <time.h>
+
 #include "SDL2/SDL.h"
 #include "actions.h"
 #include "macros.h"
 #include "render.h"
 #include "types.h"
-#include <limits.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <time.h>
+
 
 /* Use two boards to maintain a backbuffer. */
 static Board board_active;
