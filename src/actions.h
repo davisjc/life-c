@@ -42,7 +42,7 @@ void
 advance_cell(int32_t board_h, int32_t board_w, int32_t row, int32_t col,
              Board board_in, Board board_out);
 
-int
+void
 toggle_cells_from_clicks(int32_t board_h, int32_t board_w,
                          Board board_clicks, Board board);
 

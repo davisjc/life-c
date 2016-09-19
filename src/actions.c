@@ -127,20 +127,17 @@ advance_cell(int32_t board_h, int32_t board_w, int32_t row, int32_t col,
     }
 }
 
-int
+void
 toggle_cells_from_clicks(int32_t board_h, int32_t board_w,
                          Board board_clicks, Board board)
 {
-    int dirty = 0;
     for (int32_t row = 0; row < board_h; row++) {
         for (int32_t col = 0; col < board_w; col++) {
             if (board_clicks[row][col]) {
                 /* Kill if alive; revive if dead. */
                 board[row][col] = !board[row][col];
-                dirty = 1;
             }
         }
     }
-    return dirty;
 }
 

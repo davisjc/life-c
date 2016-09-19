@@ -82,7 +82,6 @@ main(int argc, char *argv[])
         int restart = 0; /* set to 1 if the board should be reset */
         int clear = 0; /* set to 1 if the board should be cleared */
         int clicked = 0; /* set to 1 if a click happens */
-        int dirty = 0; /* set to 1 if a render should happen */
         zero_board(board_h, board_w, board_clicks);
 
         /*
@@ -176,44 +175,40 @@ main(int argc, char *argv[])
                 swap(Board, board_active, board_backbuffer);
             }
 
-            dirty = 1;
             ticks_last_step = SDL_GetTicks();
         }
 
         if (clicked) {
-            if (toggle_cells_from_clicks(board_h_next, board_w_next,
-                                         board_clicks, board_active))
-                dirty = 1;
+            toggle_cells_from_clicks(board_h_next, board_w_next,
+                                     board_clicks, board_active);
         }
 
         /*
          * Render.
          */
-        if (dirty) {
-            /* Blank screen; this will become the grid. */
-            SDL_SetRenderDrawColor(ren,
-                                   color_grid[0], color_grid[1], color_grid[2],
-                                   255);
-            SDL_RenderClear(ren);
+        /* Blank screen; this will become the grid. */
+        SDL_SetRenderDrawColor(ren,
+                               color_grid[0], color_grid[1], color_grid[2],
+                               255);
+        SDL_RenderClear(ren);
 
-            render_cells(ren, board_h_next, board_w_next,
-                         board_rects, board_active);
+        render_cells(ren, board_h_next, board_w_next,
+                     board_rects, board_active);
 
-            SDL_RenderPresent(ren);
-            /* Output FPS. */
-            int32_t ticks_cur_render = SDL_GetTicks();
-            int32_t ticks_since_last_render = ticks_cur_render - ticks_last_render;
-            fps_samples[fps_samples_i] = (int)(1000.0 / ticks_since_last_render);
-            fps_samples_i = (fps_samples_i + 1) % FPS_SAMPLE_COUNT;
-            if (fps_samples_i == 0) {
-                int32_t fps = 0;
-                for (int i = 0; i < FPS_SAMPLE_COUNT; i++)
-                    fps += fps_samples[i];
-                fps = (int64_t)(fps / FPS_SAMPLE_COUNT);
-                printf("FPS: %d\n", fps);
-            }
-            ticks_last_render = ticks_cur_render;
+        SDL_RenderPresent(ren);
+        /* Output FPS. */
+        int32_t ticks_cur_render = SDL_GetTicks();
+        int32_t ticks_since_last_render = ticks_cur_render - ticks_last_render;
+        fps_samples[fps_samples_i] = (int)(1000.0 / ticks_since_last_render);
+        fps_samples_i = (fps_samples_i + 1) % FPS_SAMPLE_COUNT;
+        if (fps_samples_i == 0) {
+            int32_t fps = 0;
+            for (int i = 0; i < FPS_SAMPLE_COUNT; i++)
+                fps += fps_samples[i];
+            fps = (int64_t)(fps / FPS_SAMPLE_COUNT);
+            printf("FPS: %d\n", fps);
         }
+        ticks_last_render = ticks_cur_render;
 
         /* Update current board dimensions. */
         board_h = board_h_next;
