@@ -9,6 +9,16 @@
 #include "vars.h"
 
 
+static Color color_grid[3] = COLOR_GRID;
+static Color color_alive_a[3] = COLOR_ALIVE_A;
+static Color color_alive_b[3] = COLOR_ALIVE_B;
+static Color color_dead[3] = COLOR_DEAD;
+
+/* Track FPS samples. */
+static int32_t fps_samples[FPS_SAMPLE_COUNT];
+static int32_t fps_samples_i = 0;
+static int32_t ticks_last_render = 0;
+
 int
 sdl_init(char *title, int width, int height,
          SDL_Window **win, SDL_Renderer **ren)
@@ -66,9 +76,6 @@ void
 get_color_for_cell(int32_t row, int32_t col, int32_t board_h, int32_t board_w,
                    Color *color)
 {
-    extern Color color_alive_a[3];
-    extern Color color_alive_b[3];
-
     double proportion_b = (0.0 + col) / board_w;
     double proportion_a = 1.0 - proportion_b;
     for (int i = 0; i < 3; i++) {
@@ -78,10 +85,18 @@ get_color_for_cell(int32_t row, int32_t col, int32_t board_h, int32_t board_w,
 }
 
 void
+render_blank(SDL_Renderer *ren)
+{
+    SDL_SetRenderDrawColor(ren,
+                           color_grid[0], color_grid[1], color_grid[2],
+                           255);
+    SDL_RenderClear(ren);
+}
+
+void
 render_cells(SDL_Renderer *ren, int32_t board_h, int32_t board_w,
              BoardRect rects, Board board)
 {
-    extern Color color_dead[3];
     for (int32_t row = 0; row < board_h; row++) {
         for (int32_t col = 0; col < board_w; col++) {
             Color *color = NULL;
@@ -101,5 +116,24 @@ render_cells(SDL_Renderer *ren, int32_t board_h, int32_t board_w,
             SDL_RenderFillRect(ren, &rects[row][col]);
         }
     }
+
+    record_fps();
+}
+
+void
+record_fps(void)
+{
+    int32_t ticks_cur_render = SDL_GetTicks();
+    int32_t ticks_since_last_render = ticks_cur_render - ticks_last_render;
+    fps_samples[fps_samples_i] = (int)(1000.0 / ticks_since_last_render);
+    fps_samples_i = (fps_samples_i + 1) % FPS_SAMPLE_COUNT;
+    if (fps_samples_i == 0) {
+        int32_t fps = 0;
+        for (int i = 0; i < FPS_SAMPLE_COUNT; i++)
+            fps += fps_samples[i];
+        fps = (int64_t)(fps / FPS_SAMPLE_COUNT);
+        printf("FPS: %d\n", fps);
+    }
+    ticks_last_render = ticks_cur_render;
 }
 

@@ -28,12 +28,6 @@ static Board board_clicks;
 /* SDL's perspective of board. */
 static BoardRect board_rects;
 
-/* Define some colors. */
-Color color_grid[3] = COLOR_GRID;
-Color color_alive_a[3] = COLOR_ALIVE_A;
-Color color_alive_b[3] = COLOR_ALIVE_B;
-Color color_dead[3] = COLOR_DEAD;
-
 static int32_t tick_interval = TICK_RATE_INITIAL_MS;
 
 static uint32_t board_w = BOARD_W_INIT;
@@ -62,11 +56,6 @@ main(int argc, char *argv[])
 
     /* Track the last time the game state advanced. */
     int32_t ticks_last_step = 0;
-    int32_t ticks_last_render = 0;
-
-    /* Track FPS samples. */
-    int32_t fps_samples[FPS_SAMPLE_COUNT];
-    int32_t fps_samples_i = 0;
 
     int run = 1; /* keep at 1 to keep running the game at tick_interval */
     int quit = 0; /* set to 1 to exit the game loop */
@@ -186,29 +175,12 @@ main(int argc, char *argv[])
         /*
          * Render.
          */
-        /* Blank screen; this will become the grid. */
-        SDL_SetRenderDrawColor(ren,
-                               color_grid[0], color_grid[1], color_grid[2],
-                               255);
-        SDL_RenderClear(ren);
+        render_blank(ren);
 
         render_cells(ren, board_h_next, board_w_next,
                      board_rects, board_active);
 
         SDL_RenderPresent(ren);
-        /* Output FPS. */
-        int32_t ticks_cur_render = SDL_GetTicks();
-        int32_t ticks_since_last_render = ticks_cur_render - ticks_last_render;
-        fps_samples[fps_samples_i] = (int)(1000.0 / ticks_since_last_render);
-        fps_samples_i = (fps_samples_i + 1) % FPS_SAMPLE_COUNT;
-        if (fps_samples_i == 0) {
-            int32_t fps = 0;
-            for (int i = 0; i < FPS_SAMPLE_COUNT; i++)
-                fps += fps_samples[i];
-            fps = (int64_t)(fps / FPS_SAMPLE_COUNT);
-            printf("FPS: %d\n", fps);
-        }
-        ticks_last_render = ticks_cur_render;
 
         /* Update current board dimensions. */
         board_h = board_h_next;

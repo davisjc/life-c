@@ -29,8 +29,14 @@ get_color_for_cell(int32_t row, int32_t col, int32_t board_h, int32_t board_w,
                    Color *color);
 
 void
+render_blank(SDL_Renderer *ren);
+
+void
 render_cells(SDL_Renderer *ren, int32_t board_h, int32_t board_w,
              BoardRect rects, Board board);
+
+void
+record_fps(void);
 
 #endif /* LIFE_RENDER_H */
 
