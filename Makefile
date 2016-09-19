@@ -9,7 +9,7 @@ HEADERS = $(wildcard $(SRC)/*.h)
 EXE = $(BIN)/life
 EXE_PROF = $(EXE)_prof
 
-all : $(BIN) $(EXE) $(EXE_PROF)
+all : $(BIN) $(EXE)
 
 $(BIN) :
 	mkdir -p $(BIN)
